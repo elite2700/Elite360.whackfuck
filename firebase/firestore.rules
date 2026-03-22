@@ -1,0 +1,44 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid || root.child('users').child(auth.uid).child('friendIDs').child($uid).exists()",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "rounds": {
+      "$roundId": {
+        ".read": "data.child('playerIDs').child(auth.uid).exists() || data.child('createdBy').val() === auth.uid",
+        ".write": "data.child('playerIDs').child(auth.uid).exists() || !data.exists()"
+      }
+    },
+    "handicapRecords": {
+      "$recordId": {
+        ".read": "data.child('userID').val() === auth.uid",
+        ".write": "data.child('userID').val() === auth.uid || !data.exists()"
+      }
+    },
+    "customGames": {
+      "$gameId": {
+        ".read": true,
+        ".write": "data.child('createdBy').val() === auth.uid || !data.exists()"
+      }
+    },
+    "courses": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "groups": {
+      "$groupId": {
+        ".read": "data.child('memberIDs').child(auth.uid).exists()",
+        ".write": "data.child('memberIDs').child(auth.uid).exists() || !data.exists()"
+      }
+    },
+    "friendRequests": {
+      "$requestId": {
+        ".read": "data.child('fromUserID').val() === auth.uid || data.child('toUserID').val() === auth.uid",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
