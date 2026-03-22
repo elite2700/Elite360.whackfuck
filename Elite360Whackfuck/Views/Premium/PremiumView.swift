@@ -164,7 +164,15 @@ struct PricingCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(isPopular ? .green.opacity(0.1) : .regularMaterial)
+            .background {
+                if isPopular {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(.green.opacity(0.1))
+                } else {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(.regularMaterial)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
