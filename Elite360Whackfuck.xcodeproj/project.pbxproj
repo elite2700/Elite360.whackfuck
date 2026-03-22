@@ -58,8 +58,8 @@
 		A1BD5126F504C73B35689E4E /* Elite360WhackfuckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elite360WhackfuckApp.swift; sourceTree = "<group>"; };
 		A4E802C8A0ECA3B0EE439ADB /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		801F3F90F80D6896E342F56C /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		FD218140921B4F954A5AEFF5 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color+Extensions.swift; sourceTree = "<group>"; };
-		BFF3653A64DB49CFB997766B /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date+Extensions.swift; sourceTree = "<group>"; };
+		FD218140921B4F954A5AEFF5 /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
+		BFF3653A64DB49CFB997766B /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		4A54746972124608DBA15AC7 /* AICaddyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICaddyModels.swift; sourceTree = "<group>"; };
 		81AD88F641191A29A2B647FA /* AnalyticsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsModels.swift; sourceTree = "<group>"; };
 		8613072678E850D4256C4C0C /* GameModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModels.swift; sourceTree = "<group>"; };
