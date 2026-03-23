@@ -19,8 +19,6 @@
 		E1000AAA /* MoneyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000AAA /* MoneyModels.swift */; };
 		E1000BAA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000BAA /* UserProfile.swift */; };
 		E1000CAA /* AICaddyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000CAA /* AICaddyService.swift */; };
-		E100S1AA /* SecretsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100S1AA /* SecretsManager.swift */; };
-		E100S2AA /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = F100S2AA /* Secrets.plist */; };
 		E1000DAA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000DAA /* AuthService.swift */; };
 		E1000EAA /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000EAA /* FirestoreService.swift */; };
 		E1000FAA /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000FAA /* GameEngine.swift */; };
@@ -43,8 +41,8 @@
 		E10020AA /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10020AA /* ProfileView.swift */; };
 		E10021AA /* StartRoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10021AA /* StartRoundView.swift */; };
 		E10022AA /* LiveScorecardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10022AA /* LiveScorecardView.swift */; };
-		E10023AA /* "Color+Extensions.swift" in Sources */ = {isa = PBXBuildFile; fileRef = F10023AA /* "Color+Extensions.swift" */; };
-		E10024AA /* "Date+Extensions.swift" in Sources */ = {isa = PBXBuildFile; fileRef = F10024AA /* "Date+Extensions.swift" */; };
+		E10023AA /* Color+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10023AA /* Color+Extensions.swift */; };
+		E10024AA /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10024AA /* Date+Extensions.swift */; };
 		E10025AA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F10025AA /* Assets.xcassets */; };
 		E10030AA /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = D10030AA /* FirebaseAuth */; };
 		E10031AA /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = D10031AA /* FirebaseFirestore */; };
@@ -53,6 +51,9 @@
 		E10034AA /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = D10034AA /* FirebaseAnalytics */; };
 		E10035AA /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D10035AA /* RevenueCat */; };
 		E10036AA /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = D10036AA /* GoogleGenerativeAI */; };
+		E100S1AA /* SecretsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100S1AA /* SecretsManager.swift */; };
+		E100S2AA /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = F100S2AA /* Secrets.plist */; };
+		F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F3539E872F719E780077CC5C /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,8 +70,6 @@
 		F1000AAA /* MoneyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyModels.swift; sourceTree = "<group>"; };
 		F1000BAA /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		F1000CAA /* AICaddyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICaddyService.swift; sourceTree = "<group>"; };
-		F100S1AA /* SecretsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsManager.swift; sourceTree = "<group>"; };
-		F100S2AA /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		F1000DAA /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		F1000EAA /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		F1000FAA /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
@@ -96,6 +95,9 @@
 		F10023AA /* Color+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extensions.swift"; sourceTree = "<group>"; };
 		F10024AA /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		F10025AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F100S1AA /* SecretsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsManager.swift; sourceTree = "<group>"; };
+		F100S2AA /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		F3539E872F719E780077CC5C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,25 +121,11 @@
 		G1000000 = {
 			isa = PBXGroup;
 			children = (
+				F3539E872F719E780077CC5C /* GoogleService-Info.plist */,
 				G1000001 /* Elite360Whackfuck */,
 				G100PROD /* Products */,
 				G100FWRK /* Frameworks */,
 			);
-			sourceTree = "<group>";
-		};
-		G100PROD /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A1000000 /* Elite360Whackfuck.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		G100FWRK /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		G1000001 /* Elite360Whackfuck */ = {
@@ -322,6 +310,21 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		G100FWRK /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		G100PROD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000 /* Elite360Whackfuck.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -396,6 +399,7 @@
 			files = (
 				E10025AA /* Assets.xcassets in Resources */,
 				E100S2AA /* Secrets.plist in Resources */,
+				F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -441,8 +445,8 @@
 				E10020AA /* ProfileView.swift in Sources */,
 				E10021AA /* StartRoundView.swift in Sources */,
 				E10022AA /* LiveScorecardView.swift in Sources */,
-				E10023AA /* "Color+Extensions.swift" in Sources */,
-				E10024AA /* "Date+Extensions.swift" in Sources */,
+				E10023AA /* Color+Extensions.swift in Sources */,
+				E10024AA /* Date+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,7 +721,6 @@
 			productName = GoogleGenerativeAI;
 		};
 /* End XCSwiftPackageProductDependency section */
-
 	};
 	rootObject = A1000099 /* Project object */;
 }
