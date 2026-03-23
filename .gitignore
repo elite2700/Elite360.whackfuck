@@ -1,0 +1,19 @@
+# Dependencies
+.build/
+DerivedData/
+Packages/
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Secrets — NEVER commit real API keys
+Elite360Whackfuck/Resources/Secrets.plist
+GoogleService-Info.plist

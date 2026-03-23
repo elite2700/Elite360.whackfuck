@@ -9,9 +9,8 @@ final class AICaddyService {
     private var model: GenerativeModel?
 
     private init() {
-        let apiKey = "YOUR_API_KEY_HERE"
-        guard apiKey != "YOUR_API_KEY_HERE" else {
-            print("⚠️ Gemini API key not set — AI Caddy disabled. Replace YOUR_API_KEY_HERE in AICaddyService.swift.")
+        guard let apiKey = SecretsManager.geminiAPIKey else {
+            print("⚠️ Gemini API key not found in Secrets.plist — AI Caddy disabled.")
             model = nil
             return
         }

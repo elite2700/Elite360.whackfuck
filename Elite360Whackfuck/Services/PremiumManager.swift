@@ -14,9 +14,8 @@ final class PremiumManager: ObservableObject {
     private init() {}
 
     func configure() {
-        let apiKey = "YOUR_REVENUECAT_API_KEY"
-        guard apiKey != "YOUR_REVENUECAT_API_KEY" else {
-            print("⚠️ RevenueCat API key not set — premium features disabled. Replace YOUR_REVENUECAT_API_KEY in PremiumManager.swift.")
+        guard let apiKey = SecretsManager.revenueCatAPIKey else {
+            print("⚠️ RevenueCat API key not found in Secrets.plist — premium features disabled.")
             return
         }
         Purchases.configure(withAPIKey: apiKey)

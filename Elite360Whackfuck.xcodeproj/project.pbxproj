@@ -19,6 +19,8 @@
 		E1000AAA /* MoneyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000AAA /* MoneyModels.swift */; };
 		E1000BAA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000BAA /* UserProfile.swift */; };
 		E1000CAA /* AICaddyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000CAA /* AICaddyService.swift */; };
+		E100S1AA /* SecretsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100S1AA /* SecretsManager.swift */; };
+		E100S2AA /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = F100S2AA /* Secrets.plist */; };
 		E1000DAA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000DAA /* AuthService.swift */; };
 		E1000EAA /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000EAA /* FirestoreService.swift */; };
 		E1000FAA /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000FAA /* GameEngine.swift */; };
@@ -67,6 +69,8 @@
 		F1000AAA /* MoneyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyModels.swift; sourceTree = "<group>"; };
 		F1000BAA /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		F1000CAA /* AICaddyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICaddyService.swift; sourceTree = "<group>"; };
+		F100S1AA /* SecretsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsManager.swift; sourceTree = "<group>"; };
+		F100S2AA /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		F1000DAA /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		F1000EAA /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		F1000FAA /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
@@ -296,6 +300,7 @@
 				F10010AA /* HandicapService.swift */,
 				F10011AA /* LocationService.swift */,
 				F10012AA /* PremiumManager.swift */,
+				F100S1AA /* SecretsManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -312,6 +317,7 @@
 		G1000070 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				F100S2AA /* Secrets.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -389,6 +395,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E10025AA /* Assets.xcassets in Resources */,
+				E100S2AA /* Secrets.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,6 +418,7 @@
 				E1000AAA /* MoneyModels.swift in Sources */,
 				E1000BAA /* UserProfile.swift in Sources */,
 				E1000CAA /* AICaddyService.swift in Sources */,
+				E100S1AA /* SecretsManager.swift in Sources */,
 				E1000DAA /* AuthService.swift in Sources */,
 				E1000EAA /* FirestoreService.swift in Sources */,
 				E1000FAA /* GameEngine.swift in Sources */,
