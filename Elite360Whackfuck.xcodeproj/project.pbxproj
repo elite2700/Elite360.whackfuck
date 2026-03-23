@@ -52,7 +52,6 @@
 		E10035AA /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D10035AA /* RevenueCat */; };
 		E10036AA /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = D10036AA /* GoogleGenerativeAI */; };
 		E100S1AA /* SecretsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100S1AA /* SecretsManager.swift */; };
-		E100S2AA /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = F100S2AA /* Secrets.plist */; };
 		F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F3539E872F719E780077CC5C /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -96,7 +95,6 @@
 		F10024AA /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		F10025AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F100S1AA /* SecretsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsManager.swift; sourceTree = "<group>"; };
-		F100S2AA /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
 		F3539E872F719E780077CC5C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -305,7 +303,6 @@
 		G1000070 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				F100S2AA /* Secrets.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -398,7 +395,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E10025AA /* Assets.xcassets in Resources */,
-				E100S2AA /* Secrets.plist in Resources */,
 				F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
