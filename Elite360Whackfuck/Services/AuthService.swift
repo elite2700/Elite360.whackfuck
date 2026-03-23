@@ -1,16 +1,21 @@
 import Foundation
 import FirebaseAuth
+import FirebaseCore
 import AuthenticationServices
 
 final class AuthService {
     static let shared = AuthService()
-    private let auth = Auth.auth()
+    private lazy var auth: Auth = Auth.auth()
+
+    static var isFirebaseConfigured: Bool {
+        FirebaseApp.app() != nil
+    }
 
     private init() {}
 
-    var currentUser: User? { auth.currentUser }
-    var currentUserID: String? { auth.currentUser?.uid }
-    var isAuthenticated: Bool { auth.currentUser != nil }
+    var currentUser: User? { Self.isFirebaseConfigured ? auth.currentUser : nil }
+    var currentUserID: String? { Self.isFirebaseConfigured ? auth.currentUser?.uid : nil }
+    var isAuthenticated: Bool { Self.isFirebaseConfigured && auth.currentUser != nil }
 
     // MARK: - Email Auth
 
@@ -58,11 +63,16 @@ final class AuthService {
 
     // MARK: - Auth State Listener
 
-    func addAuthStateListener(_ handler: @escaping (User?) -> Void) -> AuthStateDidChangeListenerHandle {
-        auth.addStateDidChangeListener { _, user in handler(user) }
+    func addAuthStateListener(_ handler: @escaping (User?) -> Void) -> AuthStateDidChangeListenerHandle? {
+        guard Self.isFirebaseConfigured else {
+            handler(nil)
+            return nil
+        }
+        return auth.addStateDidChangeListener { _, user in handler(user) }
     }
 
-    func removeAuthStateListener(_ handle: AuthStateDidChangeListenerHandle) {
+    func removeAuthStateListener(_ handle: AuthStateDidChangeListenerHandle?) {
+        guard let handle else { return }
         auth.removeStateDidChangeListener(handle)
     }
 }

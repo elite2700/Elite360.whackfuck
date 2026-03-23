@@ -6,19 +6,30 @@ final class AICaddyService {
     static let shared = AICaddyService()
 
     // In production, load from secure config / Firebase Remote Config
-    private let model: GenerativeModel
+    private var model: GenerativeModel?
 
     private init() {
-        // API key should be stored securely — this is a placeholder
-        model = GenerativeModel(name: "gemini-pro", apiKey: "YOUR_API_KEY_HERE")
+        let apiKey = "YOUR_API_KEY_HERE"
+        guard apiKey != "YOUR_API_KEY_HERE" else {
+            print("⚠️ Gemini API key not set — AI Caddy disabled. Replace YOUR_API_KEY_HERE in AICaddyService.swift.")
+            model = nil
+            return
+        }
+        model = GenerativeModel(name: "gemini-pro", apiKey: apiKey)
     }
 
     // MARK: - Club Recommendation
 
     func recommendClub(context: ShotContext, clubs: [ClubData]) async throws -> AICaddyAdvice {
         let prompt = buildClubPrompt(context: context, clubs: clubs)
-        let response = try await model.generateContent(prompt)
-        let text = response.text ?? "I'd suggest your \(suggestClubFallback(distance: context.distanceToPin, clubs: clubs))."
+        let fallback = suggestClubFallback(distance: context.distanceToPin, clubs: clubs)
+        let text: String
+        if let model {
+            let response = try await model.generateContent(prompt)
+            text = response.text ?? "I'd suggest your \(fallback)."
+        } else {
+            text = "I'd suggest your \(fallback)."
+        }
 
         return AICaddyAdvice(
             type: .clubSelection,
@@ -39,12 +50,18 @@ final class AICaddyService {
         Wind: \(context.windSpeed ?? 0) mph \(context.windDirection?.rawValue ?? "calm").
         Give concise, actionable advice for this shot. Keep it under 3 sentences.
         """
-        let response = try await model.generateContent(prompt)
+        let message: String
+        if let model {
+            let response = try await model.generateContent(prompt)
+            message = response.text ?? "Aim for the center of the green and play safe."
+        } else {
+            message = "Aim for the center of the green and play safe."
+        }
 
         return AICaddyAdvice(
             type: .shotStrategy,
             title: "Shot Strategy",
-            message: response.text ?? "Aim for the center of the green and play safe.",
+            message: message,
             confidence: 0.75,
             timestamp: Date()
         )
@@ -68,8 +85,13 @@ final class AICaddyService {
         Keep each tip under 2 sentences. Be specific about yardage ranges or situations.
         """
 
-        let response = try await model.generateContent(prompt)
-        let text = response.text ?? ""
+        let text: String
+        if let model {
+            let response = try await model.generateContent(prompt)
+            text = response.text ?? ""
+        } else {
+            text = "Putting: Focus on distance control for long putts.\nApproach: Work on your 100-150 yard distances.\nDriving: Aim for fairways over distance."
+        }
         let tips = text.components(separatedBy: "\n").filter { !$0.isEmpty }
 
         return tips.prefix(3).map { tip in

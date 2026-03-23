@@ -3,14 +3,16 @@ import FirebaseFirestore
 
 final class FirestoreService {
     static let shared = FirestoreService()
-    private let db = Firestore.firestore()
-
-    private init() {
-        let settings = db.settings
+    private lazy var db: Firestore = {
+        let firestore = Firestore.firestore()
+        let settings = firestore.settings
         settings.isPersistenceEnabled = true
         settings.cacheSizeBytes = FirestoreCacheSizeUnlimited
-        db.settings = settings
-    }
+        firestore.settings = settings
+        return firestore
+    }()
+
+    private init() {}
 
     // MARK: - Generic CRUD
 

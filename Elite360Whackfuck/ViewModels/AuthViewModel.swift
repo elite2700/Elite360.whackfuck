@@ -30,9 +30,7 @@ final class AuthViewModel: ObservableObject {
     }
 
     deinit {
-        if let handle = authHandle {
-            auth.removeAuthStateListener(handle)
-        }
+        auth.removeAuthStateListener(authHandle)
     }
 
     // MARK: - Email Auth
