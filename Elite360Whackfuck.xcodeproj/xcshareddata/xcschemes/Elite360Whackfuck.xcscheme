@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1540"
+   LastUpgradeVersion = "1600"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "EB74C4510C048F7429B48E51"
+               BlueprintIdentifier = "A1000001"
                BuildableName = "Elite360Whackfuck.app"
                BlueprintName = "Elite360Whackfuck"
                ReferencedContainer = "container:Elite360Whackfuck.xcodeproj">
@@ -44,7 +44,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "EB74C4510C048F7429B48E51"
+            BlueprintIdentifier = "A1000001"
             BuildableName = "Elite360Whackfuck.app"
             BlueprintName = "Elite360Whackfuck"
             ReferencedContainer = "container:Elite360Whackfuck.xcodeproj">
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "EB74C4510C048F7429B48E51"
+            BlueprintIdentifier = "A1000001"
             BuildableName = "Elite360Whackfuck.app"
             BlueprintName = "Elite360Whackfuck"
             ReferencedContainer = "container:Elite360Whackfuck.xcodeproj">
