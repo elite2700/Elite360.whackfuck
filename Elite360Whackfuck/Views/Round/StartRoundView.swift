@@ -189,14 +189,7 @@ struct StartRoundView: View {
         }
         isSearching = true
         do {
-            let lowerQuery = query.lowercased()
-            let all: [GolfCourse] = try await FirestoreService.shared.query(
-                collection: GolfCourse.collectionName,
-                field: "nameLowercase",
-                isGreaterThanOrEqualTo: lowerQuery,
-                isLessThan: lowerQuery + "\u{f8ff}"
-            )
-            searchResults = all
+            searchResults = try await GolfCourseAPIService.shared.searchCourses(query: query)
         } catch {
             searchResults = []
         }

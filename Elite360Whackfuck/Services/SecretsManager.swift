@@ -20,4 +20,8 @@ enum SecretsManager {
     static var revenueCatAPIKey: String? {
         secrets["REVENUECAT_API_KEY"] as? String
     }
+
+    static var golfCourseAPIKey: String? {
+        secrets["GOLF_COURSE_API_KEY"] as? String
+    }
 }

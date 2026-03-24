@@ -52,7 +52,9 @@
 		E10035AA /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D10035AA /* RevenueCat */; };
 		E10036AA /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = D10036AA /* GoogleGenerativeAI */; };
 		E100S1AA /* SecretsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100S1AA /* SecretsManager.swift */; };
+		E100G1AA /* GolfCourseAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100G1AA /* GolfCourseAPIService.swift */; };
 		F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F3539E872F719E780077CC5C /* GoogleService-Info.plist */; };
+		F100P1AA /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = F100P2AA /* Secrets.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -95,7 +97,9 @@
 		F10024AA /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		F10025AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F100S1AA /* SecretsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretsManager.swift; sourceTree = "<group>"; };
+		F100G1AA /* GolfCourseAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfCourseAPIService.swift; sourceTree = "<group>"; };
 		F3539E872F719E780077CC5C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F100P2AA /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Secrets.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -286,6 +290,7 @@
 				F10011AA /* LocationService.swift */,
 				F10012AA /* PremiumManager.swift */,
 				F100S1AA /* SecretsManager.swift */,
+				F100G1AA /* GolfCourseAPIService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -303,6 +308,7 @@
 			isa = PBXGroup;
 			children = (
 				F3539E872F719E780077CC5C /* GoogleService-Info.plist */,
+				F100P2AA /* Secrets.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -396,6 +402,7 @@
 			files = (
 				E10025AA /* Assets.xcassets in Resources */,
 				F3539E882F719E780077CC5C /* GoogleService-Info.plist in Resources */,
+				F100P1AA /* Secrets.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,6 +426,7 @@
 				E1000BAA /* UserProfile.swift in Sources */,
 				E1000CAA /* AICaddyService.swift in Sources */,
 				E100S1AA /* SecretsManager.swift in Sources */,
+				E100G1AA /* GolfCourseAPIService.swift in Sources */,
 				E1000DAA /* AuthService.swift in Sources */,
 				E1000EAA /* FirestoreService.swift in Sources */,
 				E1000FAA /* GameEngine.swift in Sources */,
