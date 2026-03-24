@@ -68,6 +68,14 @@ struct ProfileView: View {
                 PremiumView()
                     .environmentObject(premiumManager)
             }
+            .alert("Error", isPresented: Binding(
+                get: { authVM.error != nil },
+                set: { if !$0 { authVM.error = nil } }
+            )) {
+                Button("OK") { authVM.error = nil }
+            } message: {
+                Text(authVM.error ?? "")
+            }
         }
     }
 
@@ -123,8 +131,11 @@ struct ProfileView: View {
                 Text("Handicap Index")
                     .font(.headline)
                 Spacer()
-                Button("Edit") { isEditingHandicap = true }
-                    .font(.caption)
+                Button("Edit") {
+                    handicapText = authVM.currentProfile?.handicapIndex.map { String(format: "%.1f", $0) } ?? ""
+                    isEditingHandicap = true
+                }
+                .font(.caption)
             }
 
             if let hcp = authVM.currentProfile?.handicapIndex {
@@ -141,15 +152,9 @@ struct ProfileView: View {
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.horizontal)
-        .alert("Update Handicap", isPresented: $isEditingHandicap) {
-            TextField("Handicap Index", text: $handicapText)
-                .keyboardType(.decimalPad)
-            Button("Save") {
-                if let value = Double(handicapText) {
-                    Task { await authVM.updateProfile(["handicapIndex": value]) }
-                }
-            }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $isEditingHandicap) {
+            EditHandicapSheet(handicapText: $handicapText)
+                .environmentObject(authVM)
         }
     }
 
@@ -207,30 +212,16 @@ struct ProfileView: View {
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.horizontal)
-        .alert("Edit Profile", isPresented: $showEditProfile) {
-            TextField("Display Name", text: $editDisplayName)
-            TextField("Username", text: $editUsername)
-            Button("Save") {
-                let name = editDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
-                let user = editUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                guard !name.isEmpty, !user.isEmpty else { return }
-                Task {
-                    await authVM.updateProfile([
-                        "displayName": name,
-                        "username": user
-                    ])
-                }
-            }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileSheet(
+                displayName: $editDisplayName,
+                username: $editUsername
+            )
+            .environmentObject(authVM)
         }
-        .alert("Home Course", isPresented: $showHomeCourse) {
-            TextField("Course name", text: $editHomeCourse)
-            Button("Save") {
-                Task {
-                    await authVM.updateProfile(["homeCourse": editHomeCourse])
-                }
-            }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $showHomeCourse) {
+            EditHomeCourseSheet(homeCourse: $editHomeCourse)
+                .environmentObject(authVM)
         }
     }
 
@@ -337,5 +328,148 @@ struct FriendsListView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Edit Profile Sheet
+
+struct EditProfileSheet: View {
+    @Binding var displayName: String
+    @Binding var username: String
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Display Name") {
+                    TextField("Display Name", text: $displayName)
+                        .textContentType(.name)
+                        .autocorrectionDisabled()
+                }
+                Section("Username") {
+                    HStack {
+                        Text("@")
+                            .foregroundStyle(.secondary)
+                        TextField("username", text: $username)
+                            .textContentType(.username)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let user = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                        guard !name.isEmpty, !user.isEmpty else { return }
+                        isSaving = true
+                        Task {
+                            await authVM.updateProfile([
+                                "displayName": name,
+                                "username": user
+                            ])
+                            isSaving = false
+                            dismiss()
+                        }
+                    }
+                    .disabled(displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                              username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                              isSaving)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Edit Home Course Sheet
+
+struct EditHomeCourseSheet: View {
+    @Binding var homeCourse: String
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Home Course") {
+                    TextField("Course name", text: $homeCourse)
+                        .autocorrectionDisabled()
+                }
+            }
+            .navigationTitle("Home Course")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        isSaving = true
+                        Task {
+                            await authVM.updateProfile(["homeCourse": homeCourse.trimmingCharacters(in: .whitespacesAndNewlines)])
+                            isSaving = false
+                            dismiss()
+                        }
+                    }
+                    .disabled(isSaving)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Edit Handicap Sheet
+
+struct EditHandicapSheet: View {
+    @Binding var handicapText: String
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Handicap Index") {
+                    TextField("e.g. 12.4", text: $handicapText)
+                        .keyboardType(.decimalPad)
+                }
+                Section {
+                    Text("Enter your official USGA Handicap Index or a self-assessed value.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Update Handicap")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        guard let value = Double(handicapText.trimmingCharacters(in: .whitespaces)) else { return }
+                        isSaving = true
+                        Task {
+                            await authVM.updateProfile(["handicapIndex": value])
+                            isSaving = false
+                            dismiss()
+                        }
+                    }
+                    .disabled(Double(handicapText.trimmingCharacters(in: .whitespaces)) == nil || isSaving)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

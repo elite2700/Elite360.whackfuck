@@ -128,7 +128,23 @@ final class AuthViewModel: ObservableObject {
             var fields = updates
             fields["updatedAt"] = Date()
             try await db.updateFields(in: UserProfile.collectionName, documentID: uid, fields: fields)
-            await loadProfile(uid: uid)
+
+            // Optimistic local update so UI reflects changes immediately
+            if var profile = currentProfile {
+                for (key, value) in updates {
+                    switch key {
+                    case "displayName": profile.displayName = value as? String ?? profile.displayName
+                    case "username": profile.username = value as? String ?? profile.username
+                    case "homeCourse": profile.homeCourse = value as? String
+                    case "handicapIndex": profile.handicapIndex = value as? Double
+                    case "photoURL": profile.photoURL = value as? String
+                    case "isPremium": profile.isPremium = value as? Bool ?? profile.isPremium
+                    default: break
+                    }
+                }
+                profile.updatedAt = Date()
+                currentProfile = profile
+            }
         } catch {
             self.error = error.localizedDescription
         }
