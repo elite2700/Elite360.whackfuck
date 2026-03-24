@@ -10,6 +10,19 @@ struct LoginView: View {
     @State private var username = ""
     @State private var showResetPassword = false
 
+    private var isEmailValid: Bool {
+        let pattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+        return email.wholeMatch(of: pattern) != nil
+    }
+
+    private var isPasswordValid: Bool {
+        password.count >= 8
+    }
+
+    private var canSubmit: Bool {
+        isEmailValid && isPasswordValid && (!isSignUp || (!displayName.isEmpty && !username.isEmpty))
+    }
+
     var body: some View {
         ZStack {
             LinearGradient(
@@ -50,6 +63,17 @@ struct LoginView: View {
                             .autocapitalization(.none)
 
                         StyledTextField(text: $password, placeholder: "Password", icon: "lock", isSecure: true)
+
+                        if !email.isEmpty && !isEmailValid {
+                            Text("Enter a valid email address")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                        if !password.isEmpty && !isPasswordValid {
+                            Text("Password must be at least 8 characters")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
                     }
                     .padding(.horizontal, 32)
 
@@ -85,6 +109,8 @@ struct LoginView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(.horizontal, 32)
+                    .disabled(!canSubmit)
+                    .opacity(canSubmit ? 1 : 0.5)
 
                     // Toggle Sign Up / Sign In
                     Button {
@@ -122,6 +148,24 @@ struct LoginView: View {
                     .signInWithAppleButtonStyle(.white)
                     .frame(height: 50)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 32)
+
+                    // Google Sign-In
+                    Button {
+                        Task { await authVM.signInWithGoogle() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "g.circle.fill")
+                                .font(.title3)
+                            Text("Sign in with Google")
+                                .font(.subheadline.bold())
+                        }
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                     .padding(.horizontal, 32)
 
                     Spacer(minLength: 40)

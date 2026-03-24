@@ -14,6 +14,7 @@ struct GolfRound: Codable, Identifiable {
     var moneyPot: MoneyPot?
     var courseRating: Double
     var slopeRating: Int
+    var holePars: [Int]  // par per hole (index 0 = hole 1)
 
     enum RoundStatus: String, Codable {
         case setup, inProgress, completed, cancelled

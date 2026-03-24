@@ -1,44 +1,69 @@
-{
-  "rules": {
-    "users": {
-      "$uid": {
-        ".read": "$uid === auth.uid || root.child('users').child(auth.uid).child('friendIDs').child($uid).exists()",
-        ".write": "$uid === auth.uid"
-      }
-    },
-    "rounds": {
-      "$roundId": {
-        ".read": "data.child('playerIDs').child(auth.uid).exists() || data.child('createdBy').val() === auth.uid",
-        ".write": "data.child('playerIDs').child(auth.uid).exists() || !data.exists()"
-      }
-    },
-    "handicapRecords": {
-      "$recordId": {
-        ".read": "data.child('userID').val() === auth.uid",
-        ".write": "data.child('userID').val() === auth.uid || !data.exists()"
-      }
-    },
-    "customGames": {
-      "$gameId": {
-        ".read": true,
-        ".write": "data.child('createdBy').val() === auth.uid || !data.exists()"
-      }
-    },
-    "courses": {
-      ".read": true,
-      ".write": "auth != null"
-    },
-    "groups": {
-      "$groupId": {
-        ".read": "data.child('memberIDs').child(auth.uid).exists()",
-        ".write": "data.child('memberIDs').child(auth.uid).exists() || !data.exists()"
-      }
-    },
-    "friendRequests": {
-      "$requestId": {
-        ".read": "data.child('fromUserID').val() === auth.uid || data.child('toUserID').val() === auth.uid",
-        ".write": "auth != null"
-      }
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: read own profile or friends' profiles; write only own
+    match /users/{uid} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid
+                      || uid in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.friendIDs);
+      allow write: if request.auth != null
+                   && request.auth.uid == uid;
+    }
+
+    // Rounds: read/write if you are a participant or the creator
+    match /rounds/{roundId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid in resource.data.playerIDs
+                      || resource.data.createdBy == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+                            && (request.auth.uid in resource.data.playerIDs);
+    }
+
+    // Handicap records: only the owning user
+    match /handicapRecords/{recordId} {
+      allow read: if request.auth != null
+                  && resource.data.userID == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.userID == request.auth.uid;
+      allow update, delete: if request.auth != null
+                            && resource.data.userID == request.auth.uid;
+    }
+
+    // Custom games: anyone can read; only creator can modify
+    match /customGames/{gameId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+                            && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Courses: any authenticated user can read; any authenticated user can write
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Groups: only members can read/write; anyone can create
+    match /groups/{groupId} {
+      allow read: if request.auth != null
+                  && request.auth.uid in resource.data.memberIDs;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+                            && request.auth.uid in resource.data.memberIDs;
+    }
+
+    // Friend requests: sender or recipient can read; any authed user can create
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null
+                  && (resource.data.fromUserID == request.auth.uid
+                      || resource.data.toUserID == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+                            && (resource.data.fromUserID == request.auth.uid
+                                || resource.data.toUserID == request.auth.uid);
     }
   }
 }

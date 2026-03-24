@@ -684,21 +684,36 @@ final class GameEngine {
             var dots: [DotAward] = []
 
             for (i, score) in card.holeScores.enumerated() {
+                guard score.isComplete else { continue }
                 let par = i < holePars.count ? holePars[i] : 4
                 let holeNum = i + 1
 
+                // Eagle or better
                 if score.strokes <= par - 2 {
                     dots.append(DotAward(holeNumber: holeNum, type: .eagle, points: 4))
-                } else if score.strokes == par - 1 {
+                }
+                // Birdie
+                else if score.strokes == par - 1 {
                     dots.append(DotAward(holeNumber: holeNum, type: .birdie, points: 2))
                 }
+                // Par
+                else if score.strokes == par {
+                    dots.append(DotAward(holeNumber: holeNum, type: .par, points: 1))
+                }
 
+                // Sand save: hit from sand and still made par or better
                 if score.sandShots > 0 && score.strokes <= par {
                     dots.append(DotAward(holeNumber: holeNum, type: .sandSave, points: 2))
                 }
 
+                // Greenie: hit green in regulation
                 if score.greenInRegulation {
                     dots.append(DotAward(holeNumber: holeNum, type: .greenie, points: 1))
+                }
+
+                // Chip-in: missed GIR but holed out with 0-1 putts for par or better
+                if !score.greenInRegulation && score.putts <= 1 && score.strokes <= par {
+                    dots.append(DotAward(holeNumber: holeNum, type: .chipIn, points: 3))
                 }
             }
 

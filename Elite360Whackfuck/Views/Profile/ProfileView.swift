@@ -9,6 +9,11 @@ struct ProfileView: View {
     @State private var showFriends = false
     @State private var showPremium = false
     @State private var friendSearch = ""
+    @State private var showEditProfile = false
+    @State private var showHomeCourse = false
+    @State private var editDisplayName = ""
+    @State private var editUsername = ""
+    @State private var editHomeCourse = ""
 
     var body: some View {
         NavigationStack {
@@ -175,17 +180,58 @@ struct ProfileView: View {
 
     private var settingsSection: some View {
         VStack(spacing: 0) {
-            SettingsRow(icon: "person.text.rectangle", title: "Edit Profile") {}
+            SettingsRow(icon: "person.text.rectangle", title: "Edit Profile") {
+                editDisplayName = authVM.currentProfile?.displayName ?? ""
+                editUsername = authVM.currentProfile?.username ?? ""
+                showEditProfile = true
+            }
             Divider().padding(.leading, 52)
-            SettingsRow(icon: "mappin", title: "Home Course") {}
+            SettingsRow(icon: "mappin", title: "Home Course") {
+                editHomeCourse = authVM.currentProfile?.homeCourse ?? ""
+                showHomeCourse = true
+            }
             Divider().padding(.leading, 52)
-            SettingsRow(icon: "bell", title: "Notifications") {}
+            SettingsRow(icon: "bell", title: "Notifications") {
+                // Opens system notification settings for this app
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
             Divider().padding(.leading, 52)
-            SettingsRow(icon: "lock.shield", title: "Privacy") {}
+            SettingsRow(icon: "lock.shield", title: "Privacy") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
         }
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.horizontal)
+        .alert("Edit Profile", isPresented: $showEditProfile) {
+            TextField("Display Name", text: $editDisplayName)
+            TextField("Username", text: $editUsername)
+            Button("Save") {
+                let name = editDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let user = editUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                guard !name.isEmpty, !user.isEmpty else { return }
+                Task {
+                    await authVM.updateProfile([
+                        "displayName": name,
+                        "username": user
+                    ])
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Home Course", isPresented: $showHomeCourse) {
+            TextField("Course name", text: $editHomeCourse)
+            Button("Save") {
+                Task {
+                    await authVM.updateProfile(["homeCourse": editHomeCourse])
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     // MARK: - Premium Banner

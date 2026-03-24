@@ -9,6 +9,9 @@ struct StartRoundView: View {
 
     @State private var searchText = ""
     @State private var selectedCourse: GolfCourse?
+    @State private var searchResults: [GolfCourse] = []
+    @State private var isSearching = false
+    @State private var showManualEntry = false
     @State private var addedPlayers: [UserProfile] = []
     @State private var selectedGames: [GameFormat] = []
     @State private var stakes: [GameFormat: Double] = [:]
@@ -72,6 +75,10 @@ struct StartRoundView: View {
                 if let loc = locationService.currentLocation {
                     Marker("You", coordinate: loc.coordinate)
                 }
+                if let course = selectedCourse {
+                    Marker(course.name, coordinate: .init(latitude: course.latitude, longitude: course.longitude))
+                        .tint(.green)
+                }
             }
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -81,16 +88,62 @@ struct StartRoundView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                 TextField("Search courses...", text: $searchText)
+                    .onSubmit { Task { await searchCourses() } }
+                if isSearching {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
             }
             .padding()
             .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding(.horizontal)
+            .onChange(of: searchText) {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(300))
+                    await searchCourses()
+                }
+            }
 
-            // Preview selection or placeholder
+            // Search results
+            if !searchResults.isEmpty && selectedCourse == nil {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(searchResults) { course in
+                            Button {
+                                selectedCourse = course
+                                searchResults = []
+                            } label: {
+                                courseRow(course)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .frame(maxHeight: 200)
+            }
+
+            // Preview selection or manual entry
             if let course = selectedCourse {
                 selectedCourseCard(course)
-            } else {
+                Button("Change Course") {
+                    selectedCourse = nil
+                    searchText = ""
+                }
+                .font(.caption)
+            } else if searchResults.isEmpty && !searchText.isEmpty && !isSearching {
+                VStack(spacing: 8) {
+                    Text("No courses found")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button("Add Course Manually") {
+                        showManualEntry = true
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.green)
+                }
+                .padding(.top, 12)
+            } else if searchText.isEmpty {
                 Text("Search or select from nearby courses")
                     .foregroundStyle(.secondary)
                     .padding(.top, 20)
@@ -103,6 +156,52 @@ struct StartRoundView: View {
             }
         }
         .padding(.vertical)
+        .sheet(isPresented: $showManualEntry) {
+            ManualCourseEntryView { course in
+                selectedCourse = course
+                showManualEntry = false
+            }
+        }
+    }
+
+    private func courseRow(_ course: GolfCourse) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(course.name).font(.subheadline.bold()).foregroundStyle(.primary)
+                Text("\(course.city), \(course.state)").font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Par \(course.par)").font(.caption).foregroundStyle(.secondary)
+                Text("Slope \(course.slopeRating)").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func searchCourses() async {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else {
+            searchResults = []
+            return
+        }
+        isSearching = true
+        do {
+            // Firestore doesn't support full-text search natively, so we use a prefix match
+            // on the name field. For production, consider Algolia or a Cloud Function.
+            let all: [GolfCourse] = try await FirestoreService.shared.query(
+                collection: GolfCourse.collectionName,
+                field: "name",
+                isGreaterThanOrEqualTo: query,
+                isLessThan: query + "\u{f8ff}"
+            )
+            searchResults = all
+        } catch {
+            searchResults = []
+        }
+        isSearching = false
     }
 
     private func selectedCourseCard(_ course: GolfCourse) -> some View {
@@ -386,5 +485,96 @@ struct GameSelectionRow: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(isSelected ? .green : .gray.opacity(0.2))
         )
+    }
+}
+
+// MARK: - Manual Course Entry
+
+struct ManualCourseEntryView: View {
+    let onSave: (GolfCourse) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var city = ""
+    @State private var state = ""
+    @State private var courseRating = ""
+    @State private var slopeRating = ""
+    @State private var par = "72"
+    @State private var holeCount = 18
+    @State private var isSaving = false
+
+    var isValid: Bool {
+        !name.isEmpty && Double(courseRating) != nil && Int(slopeRating) != nil && Int(par) != nil
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Course Info") {
+                    TextField("Course Name", text: $name)
+                    TextField("City", text: $city)
+                    TextField("State", text: $state)
+                }
+                Section("Ratings") {
+                    TextField("Course Rating (e.g. 71.2)", text: $courseRating)
+                        .keyboardType(.decimalPad)
+                    TextField("Slope Rating (e.g. 128)", text: $slopeRating)
+                        .keyboardType(.numberPad)
+                    TextField("Par (e.g. 72)", text: $par)
+                        .keyboardType(.numberPad)
+                    Picker("Holes", selection: $holeCount) {
+                        Text("18 Holes").tag(18)
+                        Text("9 Holes").tag(9)
+                    }
+                }
+            }
+            .navigationTitle("Add Course")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await saveCourse() } }
+                        .disabled(!isValid || isSaving)
+                }
+            }
+        }
+    }
+
+    private func saveCourse() async {
+        guard let rating = Double(courseRating),
+              let slope = Int(slopeRating),
+              let coursePar = Int(par) else { return }
+        isSaving = true
+
+        let defaultHolePar = coursePar / holeCount
+        let remainder = coursePar % holeCount
+        let holes = (1...holeCount).map { num in
+            HoleInfo(
+                number: num,
+                par: defaultHolePar + (num <= remainder ? 1 : 0),
+                yardage: 0,
+                handicapRank: num
+            )
+        }
+
+        var course = GolfCourse(
+            name: name,
+            city: city,
+            state: state,
+            country: "US",
+            latitude: 0,
+            longitude: 0,
+            courseRating: rating,
+            slopeRating: slope,
+            par: coursePar,
+            holes: holes
+        )
+
+        if let docID = try? await FirestoreService.shared.create(course, in: GolfCourse.collectionName) {
+            course.id = docID
+        }
+        onSave(course)
     }
 }

@@ -4,6 +4,7 @@ struct DashboardView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var analyticsVM = AnalyticsViewModel()
     @State private var recentRounds: [GolfRound] = []
+    @State private var friendActivity: [FriendActivityItem] = []
 
     var body: some View {
         NavigationStack {
@@ -43,6 +44,7 @@ struct DashboardView: View {
                 if let uid = authVM.currentProfile?.id {
                     await analyticsVM.loadHistory(for: uid)
                     recentRounds = Array(analyticsVM.roundHistory.prefix(5))
+                    await loadFriendActivity()
                 }
             }
         }
@@ -134,20 +136,79 @@ struct DashboardView: View {
                     .font(.headline)
                 Spacer()
                 NavigationLink("See All") {
-                    Text("Friends List") // placeholder
+                    FriendsListView()
+                        .environmentObject(authVM)
                 }
                 .font(.caption)
             }
-            Text("Add friends to see their activity here")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.vertical, 20)
+
+            if friendActivity.isEmpty {
+                Text("Add friends to see their activity here")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(friendActivity) { item in
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.title3)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.playerName)
+                                .font(.subheadline.bold())
+                            Text("Shot \(item.score) at \(item.courseName)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(item.date.relativeFormatted)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
+
+    private func loadFriendActivity() async {
+        guard let friendIDs = authVM.currentProfile?.friendIDs, !friendIDs.isEmpty else { return }
+
+        var items: [FriendActivityItem] = []
+        let db = FirestoreService.shared
+
+        for friendID in friendIDs.prefix(10) {
+            let rounds: [GolfRound] = (try? await db.query(
+                collection: GolfRound.collectionName,
+                field: "playerIDs",
+                arrayContains: friendID
+            )) ?? []
+
+            if let latest = rounds.sorted(by: { $0.date > $1.date }).first,
+               let card = latest.scorecards[friendID],
+               card.totalGross > 0 {
+                items.append(FriendActivityItem(
+                    id: friendID + latest.id.unsafelyUnwrapped,
+                    playerName: card.playerName,
+                    courseName: latest.courseName,
+                    score: card.totalGross,
+                    date: latest.date
+                ))
+            }
+        }
+        friendActivity = items.sorted { $0.date > $1.date }
+    }
+}
+
+struct FriendActivityItem: Identifiable {
+    let id: String
+    let playerName: String
+    let courseName: String
+    let score: Int
+    let date: Date
 }
 
 // MARK: - Supporting Views

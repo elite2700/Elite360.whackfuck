@@ -171,11 +171,15 @@ firebase/
    - Enable Email/Password and Apple Sign-In in Firebase Auth
    - Create Firestore database
 
-4. **Configure RevenueCat**
-   - Replace `YOUR_REVENUECAT_API_KEY` in `PremiumManager.swift`
+4. **Configure API Keys**
+   - Copy `Elite360Whackfuck/Resources/Secrets.plist.template` to `Elite360Whackfuck/Resources/Secrets.plist`
+   - Add your **RevenueCat API key** (get it from [app.revenuecat.com](https://app.revenuecat.com) → Project Settings → API Keys → Apple App-Specific Shared Secret / Public SDK Key)
+   - Add your **Google AI (Gemini) API key** (get it from [aistudio.google.com/apikey](https://aistudio.google.com/apikey))
+   - `Secrets.plist` is gitignored and will not be committed
 
-5. **Configure AI Caddy**
-   - Replace `YOUR_API_KEY_HERE` in `AICaddyService.swift` with your Google AI key
+5. **Configure Google Sign-In**
+   - In Firebase Console → Authentication → Sign-in method, enable Google
+   - The `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` must be added as a URL scheme in the Xcode project (Target → Info → URL Types)
 
 6. **Deploy Cloud Functions**
    ```bash

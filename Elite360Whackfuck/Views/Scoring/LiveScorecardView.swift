@@ -24,6 +24,23 @@ struct LiveScorecardView: View {
 
                 // Scorecard Grid
                 ScrollView {
+                    // Error Banner
+                    if let error = roundVM.error {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text(error)
+                                .font(.caption)
+                            Spacer()
+                            Button("Dismiss") { roundVM.error = nil }
+                                .font(.caption.bold())
+                        }
+                        .padding()
+                        .background(.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.horizontal)
+                    }
+
                     VStack(spacing: 0) {
                         scorecardHeader
                         scorecardRows
@@ -95,8 +112,8 @@ struct LiveScorecardView: View {
             VStack(spacing: 2) {
                 Text("HOLE \(roundVM.currentHole)")
                     .font(.headline.bold())
-                if let course = roundVM.currentRound {
-                    let par = 4 // Would come from course data
+                if let round = roundVM.currentRound {
+                    let par = round.holePars[safe: roundVM.currentHole - 1] ?? 4
                     Text("Par \(par)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -167,11 +184,12 @@ struct LiveScorecardView: View {
                         .lineLimit(1)
                     ForEach(0..<18) { i in
                         let score = i < card.holeScores.count ? card.holeScores[i] : nil
+                        let holePar = roundVM.currentRound?.holePars[safe: i] ?? 4
                         ZStack {
                             if score?.isComplete == true {
                                 Text("\(score!.strokes)")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(scoreColor(strokes: score!.strokes, par: 4))
+                                    .foregroundStyle(scoreColor(strokes: score!.strokes, par: holePar))
                             } else if i + 1 == roundVM.currentHole {
                                 Circle()
                                     .fill(.green.opacity(0.2))

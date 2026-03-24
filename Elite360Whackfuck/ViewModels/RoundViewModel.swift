@@ -68,7 +68,8 @@ final class RoundViewModel: ObservableObject {
             activeGames: games,
             moneyPot: MoneyPot(totalPot: 0, perPlayerStake: 0, ledger: [], settlements: [], isSettled: false),
             courseRating: course.courseRating,
-            slopeRating: course.slopeRating
+            slopeRating: course.slopeRating,
+            holePars: course.holes.sorted(by: { $0.number < $1.number }).map(\.par)
         )
 
         do {
@@ -145,6 +146,7 @@ final class RoundViewModel: ObservableObject {
 
     func recalculateGames() {
         guard let round = currentRound else { return }
+        let holePars = round.holePars.isEmpty ? Array(repeating: 4, count: 18) : round.holePars
 
         for game in round.activeGames {
             guard let format = GameFormat(rawValue: game.gameType) else { continue }
@@ -167,10 +169,9 @@ final class RoundViewModel: ObservableObject {
                 gameResults["skins"] = result
 
             case .stableford:
-                let pars = currentRound.map { _ in Array(repeating: 4, count: 18) } ?? []
                 let result = gameEngine.calculateStableford(
                     scorecards: scorecards,
-                    holePars: pars,
+                    holePars: holePars,
                     stakes: game.stakes,
                     useNet: !game.isGrossScoring
                 )
@@ -192,7 +193,100 @@ final class RoundViewModel: ObservableObject {
                 let result = gameEngine.calculateSnake(scorecards: scorecards, stakes: game.stakes)
                 gameResults["snake"] = result
 
-            default: break
+            case .wolf:
+                let players = Array(scorecards.keys)
+                if players.count == 4 {
+                    let result = gameEngine.calculateWolf(
+                        scorecards: scorecards,
+                        playerOrder: players,
+                        wolfChoices: [:],
+                        stakes: game.stakes
+                    )
+                    gameResults["wolf"] = result
+                }
+
+            case .bingoBangoBongo:
+                let result = gameEngine.calculateBingoBangoBongo(
+                    scorecards: scorecards,
+                    stakePerPoint: game.stakes
+                )
+                gameResults["bingoBangoBongo"] = result
+
+            case .lasVegas:
+                let teams = game.teamAssignments ?? [:]
+                let team1 = teams.filter { $0.value == 1 }.map(\.key)
+                let team2 = teams.filter { $0.value == 2 }.map(\.key)
+                if team1.count == 2, team2.count == 2 {
+                    let result = gameEngine.calculateLasVegas(
+                        team1: team1,
+                        team2: team2,
+                        scorecards: scorecards,
+                        stakes: game.stakes
+                    )
+                    gameResults["lasVegas"] = result
+                }
+
+            case .sixes:
+                let players = Array(scorecards.keys)
+                if players.count == 4 {
+                    let result = gameEngine.calculateSixes(
+                        players: players,
+                        scorecards: scorecards,
+                        stakes: game.stakes,
+                        useNet: !game.isGrossScoring
+                    )
+                    gameResults["sixes"] = result
+                }
+
+            case .ninePoint:
+                let players = Array(scorecards.keys)
+                if players.count == 3 {
+                    let result = gameEngine.calculateNinePoint(
+                        players: players,
+                        scorecards: scorecards,
+                        stakes: game.stakes,
+                        useNet: !game.isGrossScoring
+                    )
+                    gameResults["ninePoint"] = result
+                }
+
+            case .dots:
+                let result = gameEngine.calculateDots(
+                    scorecards: scorecards,
+                    holePars: holePars,
+                    stakePerDot: game.stakes
+                )
+                gameResults["dots"] = result
+
+            case .bestBall:
+                let teams = game.teamAssignments ?? [:]
+                let team1 = teams.filter { $0.value == 1 }.map(\.key)
+                let team2 = teams.filter { $0.value == 2 }.map(\.key)
+                if !team1.isEmpty, !team2.isEmpty {
+                    let result = gameEngine.calculateBestBall(
+                        team1: team1,
+                        team2: team2,
+                        scorecards: scorecards,
+                        stakes: game.stakes,
+                        useNet: !game.isGrossScoring
+                    )
+                    gameResults["bestBall"] = result
+                }
+
+            case .banker:
+                let players = Array(scorecards.keys)
+                if players.count >= 2 {
+                    let result = gameEngine.calculateBanker(
+                        players: players,
+                        scorecards: scorecards,
+                        stakes: game.stakes,
+                        useNet: !game.isGrossScoring
+                    )
+                    gameResults["banker"] = result
+                }
+
+            case .custom:
+                break
             }
         }
     }

@@ -7,6 +7,7 @@ final class GamesLibraryViewModel: ObservableObject {
     @Published var favoriteGameIDs: Set<String> = []
     @Published var selectedGames: [GameFormat] = []
     @Published var isLoading = false
+    @Published var error: String?
 
     private let db = FirestoreService.shared
 
@@ -19,6 +20,7 @@ final class GamesLibraryViewModel: ObservableObject {
                 isEqualTo: userID
             )
         } catch {
+            self.error = error.localizedDescription
             customGames = []
         }
         isLoading = false

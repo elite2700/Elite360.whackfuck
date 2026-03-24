@@ -40,6 +40,46 @@ struct GameTrackerView: View {
                     if let stableford = roundVM.gameResults["stableford"] as? GameEngine.StablefordResult {
                         stablefordCard(stableford)
                     }
+
+                    // Wolf Tracker
+                    if let wolf = roundVM.gameResults["wolf"] as? GameEngine.WolfResult {
+                        wolfCard(wolf)
+                    }
+
+                    // Bingo Bango Bongo Tracker
+                    if let bbb = roundVM.gameResults["bingoBangoBongo"] as? GameEngine.BBBResult {
+                        bbbCard(bbb)
+                    }
+
+                    // Las Vegas Tracker
+                    if let lv = roundVM.gameResults["lasVegas"] as? GameEngine.LasVegasResult {
+                        lasVegasCard(lv)
+                    }
+
+                    // Sixes Tracker
+                    if let sixes = roundVM.gameResults["sixes"] as? GameEngine.SixesResult {
+                        sixesCard(sixes)
+                    }
+
+                    // 9-Point Tracker
+                    if let np = roundVM.gameResults["ninePoint"] as? GameEngine.NinePointResult {
+                        ninePointCard(np)
+                    }
+
+                    // Dots Tracker
+                    if let dots = roundVM.gameResults["dots"] as? GameEngine.DotsResult {
+                        dotsCard(dots)
+                    }
+
+                    // Best Ball Tracker
+                    if let bb = roundVM.gameResults["bestBall"] as? GameEngine.BestBallResult {
+                        bestBallCard(bb)
+                    }
+
+                    // Banker Tracker
+                    if let banker = roundVM.gameResults["banker"] as? GameEngine.BankerResult {
+                        bankerCard(banker)
+                    }
                 }
                 .padding()
             }
@@ -199,6 +239,197 @@ struct GameTrackerView: View {
                         .font(.caption)
                         .foregroundStyle((result.moneyResults[pid] ?? 0) >= 0 ? .green : .red)
                 }
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Wolf
+
+    private func wolfCard(_ result: GameEngine.WolfResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Wolf", systemImage: "pawprint.fill")
+                .font(.headline)
+
+            ForEach(result.playerTotals.sorted(by: { $0.value > $1.value }), id: \.key) { pid, total in
+                MoneyRow(name: roundVM.scorecards[pid]?.playerName ?? pid, amount: total)
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Bingo Bango Bongo
+
+    private func bbbCard(_ result: GameEngine.BBBResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Bingo Bango Bongo", systemImage: "target")
+                .font(.headline)
+
+            ForEach(result.playerTotals.sorted(by: { $0.value > $1.value }), id: \.key) { pid, pts in
+                HStack {
+                    Text(roundVM.scorecards[pid]?.playerName ?? pid)
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(pts) pts")
+                        .font(.subheadline.bold())
+                    Text(result.moneyTotals[pid].map { $0 >= 0 ? "+$\(Int($0))" : "-$\(Int(abs($0)))" } ?? "$0")
+                        .font(.caption)
+                        .foregroundStyle((result.moneyTotals[pid] ?? 0) >= 0 ? .green : .red)
+                }
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Las Vegas
+
+    private func lasVegasCard(_ result: GameEngine.LasVegasResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Las Vegas", systemImage: "dice.fill")
+                .font(.headline)
+
+            HStack {
+                VStack {
+                    Text("Team 1").font(.caption.bold())
+                    Text("\(result.teamTotals[1] ?? 0)")
+                        .font(.title3.bold())
+                }
+                .frame(maxWidth: .infinity)
+                Text("vs").font(.caption).foregroundStyle(.secondary)
+                VStack {
+                    Text("Team 2").font(.caption.bold())
+                    Text("\(result.teamTotals[2] ?? 0)")
+                        .font(.title3.bold())
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            Divider()
+            ForEach(result.moneyResults.sorted(by: { $0.value > $1.value }), id: \.key) { pid, amount in
+                MoneyRow(name: roundVM.scorecards[pid]?.playerName ?? pid, amount: amount)
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Sixes
+
+    private func sixesCard(_ result: GameEngine.SixesResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Sixes / Round Robin", systemImage: "arrow.triangle.2.circlepath")
+                .font(.headline)
+
+            ForEach(Array(result.segments.enumerated()), id: \.offset) { _, segment in
+                HStack {
+                    Text("Holes \(segment.holes.lowerBound)-\(segment.holes.upperBound)")
+                        .font(.caption.bold())
+                    Spacer()
+                    Text("\(segment.team1Score)")
+                        .font(.caption.bold())
+                        .foregroundStyle(segment.winner == 1 ? .green : .primary)
+                    Text("vs")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(segment.team2Score)")
+                        .font(.caption.bold())
+                        .foregroundStyle(segment.winner == 2 ? .green : .primary)
+                }
+            }
+
+            Divider()
+            ForEach(result.playerTotals.sorted(by: { $0.value > $1.value }), id: \.key) { pid, total in
+                MoneyRow(name: roundVM.scorecards[pid]?.playerName ?? pid, amount: total)
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - 9-Point
+
+    private func ninePointCard(_ result: GameEngine.NinePointResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("9-Point / Niners", systemImage: "9.circle.fill")
+                .font(.headline)
+
+            ForEach(result.totalPoints.sorted(by: { $0.value > $1.value }), id: \.key) { pid, pts in
+                HStack {
+                    Text(roundVM.scorecards[pid]?.playerName ?? pid)
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(pts) pts")
+                        .font(.subheadline.bold())
+                    Text(result.moneyResults[pid].map { $0 >= 0 ? "+$\(Int($0))" : "-$\(Int(abs($0)))" } ?? "$0")
+                        .font(.caption)
+                        .foregroundStyle((result.moneyResults[pid] ?? 0) >= 0 ? .green : .red)
+                }
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Dots / Garbage
+
+    private func dotsCard(_ result: GameEngine.DotsResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Dots / Garbage", systemImage: "circle.grid.3x3.fill")
+                .font(.headline)
+
+            ForEach(result.playerTotals.sorted(by: { $0.value > $1.value }), id: \.key) { pid, pts in
+                HStack {
+                    Text(roundVM.scorecards[pid]?.playerName ?? pid)
+                        .font(.subheadline)
+                    Spacer()
+                    Text("\(pts) dots")
+                        .font(.subheadline.bold())
+                    Text(result.moneyResults[pid].map { $0 >= 0 ? "+$\(Int($0))" : "-$\(Int(abs($0)))" } ?? "$0")
+                        .font(.caption)
+                        .foregroundStyle((result.moneyResults[pid] ?? 0) >= 0 ? .green : .red)
+                }
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Best Ball
+
+    private func bestBallCard(_ result: GameEngine.BestBallResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Best Ball", systemImage: "figure.golf")
+                .font(.headline)
+
+            HStack {
+                VStack {
+                    Text("Team 1").font(.caption.bold())
+                    Text("\(result.teamTotals[1] ?? 0)")
+                        .font(.title3.bold())
+                }
+                .frame(maxWidth: .infinity)
+                Text("vs").font(.caption).foregroundStyle(.secondary)
+                VStack {
+                    Text("Team 2").font(.caption.bold())
+                    Text("\(result.teamTotals[2] ?? 0)")
+                        .font(.title3.bold())
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            Divider()
+            ForEach(result.moneyResults.sorted(by: { $0.value > $1.value }), id: \.key) { pid, amount in
+                MoneyRow(name: roundVM.scorecards[pid]?.playerName ?? pid, amount: amount)
+            }
+        }
+        .gameCard()
+    }
+
+    // MARK: - Banker
+
+    private func bankerCard(_ result: GameEngine.BankerResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Banker", systemImage: "banknote.fill")
+                .font(.headline)
+
+            ForEach(result.playerTotals.sorted(by: { $0.value > $1.value }), id: \.key) { pid, total in
+                MoneyRow(name: roundVM.scorecards[pid]?.playerName ?? pid, amount: total)
             }
         }
         .gameCard()

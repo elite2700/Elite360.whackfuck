@@ -60,6 +60,21 @@ final class FirestoreService {
         return snapshot.documents.compactMap { try? $0.data(as: T.self) }
     }
 
+    func query<T: Codable>(
+        collection: String,
+        field: String,
+        isGreaterThanOrEqualTo start: Any,
+        isLessThan end: Any,
+        limit: Int = 20
+    ) async throws -> [T] {
+        let snapshot = try await db.collection(collection)
+            .whereField(field, isGreaterThanOrEqualTo: start)
+            .whereField(field, isLessThan: end)
+            .limit(to: limit)
+            .getDocuments()
+        return snapshot.documents.compactMap { try? $0.data(as: T.self) }
+    }
+
     // MARK: - Real-time Listeners
 
     func listen<T: Codable>(

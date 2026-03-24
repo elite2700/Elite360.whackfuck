@@ -11,6 +11,30 @@ struct GamesLibraryView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    // Error Banner
+                    if let error = vm.error {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text(error)
+                                .font(.caption)
+                            Spacer()
+                            Button("Retry") {
+                                Task {
+                                    vm.error = nil
+                                    if let uid = authVM.currentProfile?.id {
+                                        await vm.loadCustomGames(userID: uid)
+                                    }
+                                }
+                            }
+                            .font(.caption.bold())
+                        }
+                        .padding()
+                        .background(.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.horizontal)
+                    }
+
                     // Search
                     HStack {
                         Image(systemName: "magnifyingglass")
