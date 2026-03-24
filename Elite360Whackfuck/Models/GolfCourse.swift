@@ -4,6 +4,7 @@ import FirebaseFirestore
 struct GolfCourse: Codable, Identifiable {
     @DocumentID var id: String?
     var name: String
+    var nameLowercase: String?
     var city: String
     var state: String
     var country: String

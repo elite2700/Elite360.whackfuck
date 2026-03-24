@@ -189,13 +189,12 @@ struct StartRoundView: View {
         }
         isSearching = true
         do {
-            // Firestore doesn't support full-text search natively, so we use a prefix match
-            // on the name field. For production, consider Algolia or a Cloud Function.
+            let lowerQuery = query.lowercased()
             let all: [GolfCourse] = try await FirestoreService.shared.query(
                 collection: GolfCourse.collectionName,
-                field: "name",
-                isGreaterThanOrEqualTo: query,
-                isLessThan: query + "\u{f8ff}"
+                field: "nameLowercase",
+                isGreaterThanOrEqualTo: lowerQuery,
+                isLessThan: lowerQuery + "\u{f8ff}"
             )
             searchResults = all
         } catch {
@@ -561,6 +560,7 @@ struct ManualCourseEntryView: View {
 
         var course = GolfCourse(
             name: name,
+            nameLowercase: name.lowercased(),
             city: city,
             state: state,
             country: "US",
