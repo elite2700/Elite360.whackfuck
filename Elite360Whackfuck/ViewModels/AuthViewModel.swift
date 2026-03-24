@@ -111,18 +111,6 @@ final class AuthViewModel: ObservableObject {
         return sha256(nonce)
     }
 
-    // MARK: - Google Sign-In
-
-    func signInWithGoogle() async {
-        do {
-            error = nil
-            let user = try await auth.signInWithGoogle()
-            await ensureProfileExists(user: user, name: nil)
-        } catch {
-            self.error = error.localizedDescription
-        }
-    }
-
     // MARK: - Profile
 
     func loadProfile(uid: String) async {

@@ -2,7 +2,6 @@ import Foundation
 import FirebaseAuth
 import FirebaseCore
 import AuthenticationServices
-import GoogleSignIn
 
 final class AuthService {
     static let shared = AuthService()
@@ -40,32 +39,6 @@ final class AuthService {
         )
         let result = try await auth.signIn(with: oauthCredential)
         return result.user
-    }
-
-    // MARK: - Google Sign-In
-
-    func signInWithGoogle(presenting: UIViewController? = nil) async throws -> User {
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            throw NSError(domain: "AuthService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Firebase clientID not found"])
-        }
-        let config = GIDConfiguration(clientID: clientID)
-        GIDSignIn.sharedInstance.configuration = config
-
-        guard let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = await windowScene.windows.first?.rootViewController else {
-            throw NSError(domain: "AuthService", code: -2, userInfo: [NSLocalizedDescriptionKey: "No root view controller found"])
-        }
-
-        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenting ?? rootVC)
-        guard let idToken = result.user.idToken?.tokenString else {
-            throw NSError(domain: "AuthService", code: -3, userInfo: [NSLocalizedDescriptionKey: "Google Sign-In failed: missing ID token"])
-        }
-        let credential = GoogleAuthProvider.credential(
-            withIDToken: idToken,
-            accessToken: result.user.accessToken.tokenString
-        )
-        let authResult = try await auth.signIn(with: credential)
-        return authResult.user
     }
 
     // MARK: - Sign Out

@@ -36,7 +36,7 @@ Elite360Whackfuck/
 │   └── AICaddyModels.swift       # AI advice, shot context
 ├── Services/                     # Business logic layer
 │   ├── FirestoreService.swift    # Generic Firestore CRUD + listeners
-│   ├── AuthService.swift         # Firebase Auth (Email, Apple, Google)
+│   ├── AuthService.swift         # Firebase Auth (Email, Apple)
 │   ├── HandicapService.swift     # USGA/WHS handicap calculation
 │   ├── LocationService.swift     # GPS rangefinder
 │   ├── AICaddyService.swift      # AI-powered recommendations
@@ -79,7 +79,7 @@ firebase/
 ## Features
 
 ### 1. Authentication & Profiles
-- Email/password, Apple Sign-In, Google Sign-In
+- Email/password, Apple Sign-In
 - User profiles with photo, home course, handicap
 - Friends system with username search
 
@@ -177,16 +177,12 @@ firebase/
    - Add your **Google AI (Gemini) API key** (get it from [aistudio.google.com/apikey](https://aistudio.google.com/apikey))
    - `Secrets.plist` is gitignored and will not be committed
 
-5. **Configure Google Sign-In**
-   - In Firebase Console → Authentication → Sign-in method, enable Google
-   - The `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` must be added as a URL scheme in the Xcode project (Target → Info → URL Types)
-
-6. **Deploy Cloud Functions**
+5. **Deploy Cloud Functions**
    ```bash
    cd firebase && npm install && firebase deploy --only functions,firestore
    ```
 
-7. **Build & Run** on iOS simulator or device
+6. **Build & Run** on iOS simulator or device
 
 ## Security & Legal
 
@@ -216,7 +212,7 @@ Core Tech Stack
         •       Other: Core Location + MapKit for course GPS, RevenueCat or StoreKit for in-app purchases (premium features), optional Apple Pay integration for money transfers (note: direct wagering may require legal compliance; app focuses on tracking “fun money” or virtual pots, with manual settlement advised).
 Key Features & Architecture
         1       User Authentication & Profiles
-        ◦       Firebase Auth (email, Apple Sign-In, Google).
+        ◦       Firebase Auth (email, Apple Sign-In).
         ◦       Profile: Name, photo, home course, current Handicap Index (manual entry or import).
         ◦       Friends system: Add via username/search, create groups/foursomes.
         2       Handicap Management

@@ -150,24 +150,6 @@ struct LoginView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal, 32)
 
-                    // Google Sign-In
-                    Button {
-                        Task { await authVM.signInWithGoogle() }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "g.circle.fill")
-                                .font(.title3)
-                            Text("Sign in with Google")
-                                .font(.subheadline.bold())
-                        }
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .padding(.horizontal, 32)
-
                     Spacer(minLength: 40)
 
                     // Disclaimer
