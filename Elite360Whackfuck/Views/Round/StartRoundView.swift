@@ -12,6 +12,7 @@ struct StartRoundView: View {
     @State private var searchResults: [GolfCourse] = []
     @State private var isSearching = false
     @State private var showManualEntry = false
+    @State private var showAddPlayer = false
     @State private var addedPlayers: [UserProfile] = []
     @State private var selectedGames: [GameFormat] = []
     @State private var stakes: [GameFormat: Double] = [:]
@@ -224,16 +225,18 @@ struct StartRoundView: View {
 
             // Current user auto-added
             if let profile = authVM.currentProfile {
-                PlayerChip(name: profile.displayName, isHost: true)
+                PlayerChip(name: profile.displayName, isHost: true, onRemove: nil)
             }
 
             ForEach(addedPlayers) { player in
-                PlayerChip(name: player.displayName, isHost: false)
+                PlayerChip(name: player.displayName, isHost: false) {
+                    addedPlayers.removeAll { $0.id == player.id }
+                }
             }
 
             // Add player action
             Button {
-                // Would show friend picker
+                showAddPlayer = true
             } label: {
                 Label("Add Player", systemImage: "plus.circle.fill")
                     .padding()
@@ -251,6 +254,10 @@ struct StartRoundView: View {
             }
         }
         .padding(.vertical)
+        .sheet(isPresented: $showAddPlayer) {
+            AddPlayerSheet(addedPlayers: $addedPlayers)
+                .environmentObject(authVM)
+        }
     }
 
     // MARK: - Game Selection
@@ -396,6 +403,7 @@ struct StartRoundView: View {
 struct PlayerChip: View {
     let name: String
     let isHost: Bool
+    var onRemove: (() -> Void)?
 
     var body: some View {
         HStack {
@@ -412,12 +420,133 @@ struct PlayerChip: View {
                     .background(.green)
                     .foregroundStyle(.black)
                     .clipShape(Capsule())
+            } else if let onRemove {
+                Button(action: onRemove) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.red.opacity(0.7))
+                }
             }
         }
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
+    }
+}
+
+// MARK: - Add Player Sheet
+
+struct AddPlayerSheet: View {
+    @Binding var addedPlayers: [UserProfile]
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var guestName = ""
+    @State private var friends: [UserProfile] = []
+    @State private var isLoadingFriends = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // Guest entry
+                Section("Add Guest") {
+                    HStack {
+                        TextField("Player name", text: $guestName)
+                            .textContentType(.name)
+                            .submitLabel(.done)
+                            .onSubmit { addGuest() }
+                        Button("Add") { addGuest() }
+                            .disabled(guestName.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.green)
+                    }
+                }
+
+                // Friends list
+                Section("Friends") {
+                    if isLoadingFriends {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else if friends.isEmpty {
+                        Text("No friends added yet")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(friends) { friend in
+                            let alreadyAdded = addedPlayers.contains { $0.id == friend.id }
+                            Button {
+                                guard !alreadyAdded else { return }
+                                addedPlayers.append(friend)
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "person.circle.fill")
+                                        .foregroundStyle(.green)
+                                    VStack(alignment: .leading) {
+                                        Text(friend.displayName)
+                                            .foregroundStyle(.primary)
+                                        if let hcp = friend.handicapIndex {
+                                            Text("Handicap: \(String(format: "%.1f", hcp))")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    if alreadyAdded {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                            }
+                            .disabled(alreadyAdded)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Add Player")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task { await loadFriends() }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func addGuest() {
+        let name = guestName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+        let guest = UserProfile(
+            id: UUID().uuidString,
+            email: "",
+            displayName: name,
+            photoURL: nil,
+            homeCourse: nil,
+            handicapIndex: nil,
+            username: name.lowercased().replacingOccurrences(of: " ", with: ""),
+            friendIDs: [],
+            groupIDs: [],
+            isPremium: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+        addedPlayers.append(guest)
+        guestName = ""
+    }
+
+    private func loadFriends() async {
+        guard let friendIDs = authVM.currentProfile?.friendIDs, !friendIDs.isEmpty else { return }
+        isLoadingFriends = true
+        let db = FirestoreService.shared
+        var loaded: [UserProfile] = []
+        for fid in friendIDs {
+            if let profile: UserProfile = try? await db.getDocument(from: UserProfile.collectionName, documentID: fid) {
+                loaded.append(profile)
+            }
+        }
+        friends = loaded
+        isLoadingFriends = false
     }
 }
 
