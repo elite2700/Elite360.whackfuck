@@ -36,16 +36,17 @@ struct LoginView: View {
                 VStack(spacing: 24) {
                     // Logo
                     VStack(spacing: 8) {
-                        Image(systemName: "figure.golf")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.green)
-                        Text("Elite360")
-                            .font(.system(size: 36, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                        Text("WHACKFUCK")
-                            .font(.system(size: 14, weight: .heavy, design: .monospaced))
-                            .foregroundStyle(.green)
-                            .tracking(4)
+                        Image("Elite360WF")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 120)
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 40)
+                        Text("by The Elite360 Corporation")
+                            .font(.caption)
+                            .foregroundStyle(.gray)
                     }
                     .padding(.top, 60)
                     .padding(.bottom, 20)
