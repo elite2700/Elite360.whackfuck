@@ -171,6 +171,7 @@ final class AuthViewModel: ObservableObject {
     func addFriend(_ friend: Friend) async {
         guard let uid = auth.currentUserID else { return }
         do {
+            error = nil
             let docID = try await db.createInSubcollection(
                 friend,
                 parentCollection: UserProfile.collectionName,
@@ -187,8 +188,12 @@ final class AuthViewModel: ObservableObject {
     }
 
     func updateFriend(_ friend: Friend, fields: [String: Any]) async {
-        guard let uid = auth.currentUserID, let fid = friend.id else { return }
+        guard let uid = auth.currentUserID, let fid = friend.id else {
+            self.error = "Unable to update friend: missing information"
+            return
+        }
         do {
+            error = nil
             try await db.updateInSubcollection(
                 parentCollection: UserProfile.collectionName,
                 parentID: uid,
@@ -217,6 +222,7 @@ final class AuthViewModel: ObservableObject {
     func deleteFriend(_ friend: Friend) async {
         guard let uid = auth.currentUserID, let fid = friend.id else { return }
         do {
+            error = nil
             try await db.deleteFromSubcollection(
                 parentCollection: UserProfile.collectionName,
                 parentID: uid,
