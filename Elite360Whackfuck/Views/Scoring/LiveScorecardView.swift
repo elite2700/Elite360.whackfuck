@@ -87,7 +87,10 @@ struct LiveScorecardView: View {
                     .environmentObject(roundVM)
             }
             .fullScreenCover(isPresented: $showPostRound) {
-                PostRoundView()
+                PostRoundView(onDone: {
+                    showPostRound = false
+                    dismiss()
+                })
                     .environmentObject(roundVM)
                     .environmentObject(moneyVM)
             }
@@ -231,29 +234,34 @@ struct LiveScorecardView: View {
     // MARK: - Bottom Toolbar
 
     private var bottomToolbar: some View {
-        HStack(spacing: 16) {
-            // Quick score entry for current hole
-            ForEach(Array(roundVM.scorecards.keys.sorted().prefix(4)), id: \.self) { pid in
-                if let card = roundVM.scorecards[pid] {
-                    ScoreEntryChip(
-                        playerName: String(card.playerName.prefix(8)),
-                        currentScore: card.holeScores[safe: roundVM.currentHole - 1]?.strokes ?? 0
-                    ) { newScore in
-                        Task {
-                            await roundVM.updateScore(
-                                playerID: pid,
-                                hole: roundVM.currentHole,
-                                strokes: newScore,
-                                putts: 2,
-                                fairwayHit: nil,
-                                gir: false
-                            )
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                // Quick score entry for current hole
+                ForEach(Array(roundVM.scorecards.keys.sorted()), id: \.self) { pid in
+                    if let card = roundVM.scorecards[pid] {
+                        let holePar = roundVM.currentRound?.holePars[safe: roundVM.currentHole - 1] ?? 4
+                        ScoreEntryChip(
+                            playerName: String(card.playerName.prefix(8)),
+                            currentScore: card.holeScores[safe: roundVM.currentHole - 1]?.strokes ?? 0,
+                            par: holePar
+                        ) { newScore in
+                            Task {
+                                await roundVM.updateScore(
+                                    playerID: pid,
+                                    hole: roundVM.currentHole,
+                                    strokes: newScore,
+                                    putts: 2,
+                                    fairwayHit: nil,
+                                    gir: false
+                                )
+                            }
                         }
                     }
                 }
             }
+            .padding(.horizontal)
         }
-        .padding()
+        .padding(.vertical)
         .background(.ultraThinMaterial)
     }
 
@@ -274,15 +282,40 @@ struct LiveScorecardView: View {
 struct ScoreEntryChip: View {
     let playerName: String
     let currentScore: Int
+    let par: Int
     let onScoreChange: (Int) -> Void
 
     @State private var score: Int
 
-    init(playerName: String, currentScore: Int, onScoreChange: @escaping (Int) -> Void) {
+    init(playerName: String, currentScore: Int, par: Int, onScoreChange: @escaping (Int) -> Void) {
         self.playerName = playerName
         self.currentScore = currentScore
+        self.par = par
         self.onScoreChange = onScoreChange
-        _score = State(initialValue: currentScore == 0 ? 4 : currentScore)
+        _score = State(initialValue: currentScore == 0 ? par : currentScore)
+    }
+
+    private var scoreLabel: String {
+        let diff = score - par
+        switch diff {
+        case ...(-2): return "Eagle"
+        case -1: return "Birdie"
+        case 0: return "Par"
+        case 1: return "Bogey"
+        case 2: return "2x Bogey"
+        default: return "+\(diff)"
+        }
+    }
+
+    private var scoreLabelColor: Color {
+        let diff = score - par
+        switch diff {
+        case ...(-2): return .yellow
+        case -1: return .red
+        case 0: return .primary
+        case 1: return .blue
+        default: return .purple
+        }
     }
 
     var body: some View {
@@ -291,24 +324,51 @@ struct ScoreEntryChip: View {
                 .font(.caption2)
                 .lineLimit(1)
 
-            HStack(spacing: 8) {
+            Text("Par \(par)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 6) {
                 Button { if score > 1 { score -= 1; onScoreChange(score) } } label: {
-                    Image(systemName: "minus.circle")
-                        .font(.caption)
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
                 }
                 Text("\(score)")
-                    .font(.headline.bold())
-                    .frame(width: 24)
+                    .font(.title2.bold())
+                    .frame(width: 30)
                 Button { if score < 15 { score += 1; onScoreChange(score) } } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.caption)
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                }
+            }
+
+            Text(scoreLabel)
+                .font(.caption2.bold())
+                .foregroundStyle(scoreLabelColor)
+
+            // Quick-select par-relative scores
+            HStack(spacing: 4) {
+                ForEach(max(1, par - 1)...(par + 2), id: \.self) { val in
+                    Button {
+                        score = val
+                        onScoreChange(score)
+                    } label: {
+                        Text("\(val)")
+                            .font(.caption2.bold())
+                            .frame(width: 24, height: 24)
+                            .background(score == val ? .green : .gray.opacity(0.2))
+                            .foregroundStyle(score == val ? .black : .primary)
+                            .clipShape(Circle())
+                    }
                 }
             }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(.green.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 

@@ -225,11 +225,11 @@ struct StartRoundView: View {
 
             // Current user auto-added
             if let profile = authVM.currentProfile {
-                PlayerChip(name: profile.displayName, isHost: true, onRemove: nil)
+                PlayerChip(name: profile.displayName, handicap: profile.handicapIndex, isHost: true, onRemove: nil)
             }
 
             ForEach(addedPlayers) { player in
-                PlayerChip(name: player.displayName, isHost: false) {
+                PlayerChip(name: player.displayName, handicap: player.handicapIndex, isHost: false) {
                     addedPlayers.removeAll { $0.id == player.id }
                 }
             }
@@ -402,6 +402,7 @@ struct StartRoundView: View {
 
 struct PlayerChip: View {
     let name: String
+    var handicap: Double? = nil
     let isHost: Bool
     var onRemove: (() -> Void)?
 
@@ -409,8 +410,15 @@ struct PlayerChip: View {
         HStack {
             Image(systemName: "person.circle.fill")
                 .foregroundStyle(.green)
-            Text(name)
-                .font(.subheadline)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.subheadline)
+                if let hcp = handicap {
+                    Text("Handicap: \(String(format: "%.1f", hcp))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             Spacer()
             if isHost {
                 Text("HOST")

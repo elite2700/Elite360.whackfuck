@@ -5,6 +5,7 @@ struct PostRoundView: View {
     @EnvironmentObject var moneyVM: MoneyViewModel
     @Environment(\.dismiss) private var dismiss
 
+    var onDone: (() -> Void)? = nil
     @State private var showExport = false
     @State private var selectedTab = 0
 
@@ -30,7 +31,13 @@ struct PostRoundView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button("Done") {
+                        if let onDone {
+                            onDone()
+                        } else {
+                            dismiss()
+                        }
+                    }
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     ShareLink(item: moneyVM.exportSettlement()) {
