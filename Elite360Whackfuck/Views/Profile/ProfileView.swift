@@ -6,7 +6,6 @@ struct ProfileView: View {
     @EnvironmentObject var premiumManager: PremiumManager
 
     @State private var isEditingHandicap = false
-    @State private var handicapText = ""
     @State private var showFriends = false
     @State private var showPremium = false
     @State private var friendSearch = ""
@@ -133,7 +132,6 @@ struct ProfileView: View {
                     .font(.headline)
                 Spacer()
                 Button("Edit") {
-                    handicapText = authVM.currentProfile?.handicapIndex.map { String(format: "%.1f", $0) } ?? ""
                     isEditingHandicap = true
                 }
                 .font(.caption)
@@ -154,7 +152,7 @@ struct ProfileView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.horizontal)
         .sheet(isPresented: $isEditingHandicap) {
-            EditHandicapSheet(handicapText: $handicapText)
+            EditHandicapSheet()
                 .environmentObject(authVM)
         }
     }
@@ -571,12 +569,16 @@ struct EditFriendSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         isSaving = true
-                        let fields: [String: Any] = [
+                        var fields: [String: Any] = [
                             "name": name.trimmingCharacters(in: .whitespacesAndNewlines),
                             "email": email.isEmpty ? NSNull() : email.trimmingCharacters(in: .whitespacesAndNewlines),
-                            "phone": phone.isEmpty ? NSNull() : phone.trimmingCharacters(in: .whitespacesAndNewlines),
-                            "handicap": Double(handicapText.trimmingCharacters(in: .whitespaces)) as Any
+                            "phone": phone.isEmpty ? NSNull() : phone.trimmingCharacters(in: .whitespacesAndNewlines)
                         ]
+                        if let hcpValue = Double(handicapText.trimmingCharacters(in: .whitespaces)) {
+                            fields["handicap"] = hcpValue
+                        } else {
+                            fields["handicap"] = NSNull()
+                        }
                         Task {
                             await authVM.updateFriend(friend, fields: fields)
                             isSaving = false
@@ -698,10 +700,11 @@ struct EditHomeCourseSheet: View {
 // MARK: - Edit Handicap Sheet
 
 struct EditHandicapSheet: View {
-    @Binding var handicapText: String
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var handicapText = ""
     @State private var isSaving = false
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
@@ -715,6 +718,12 @@ struct EditHandicapSheet: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if let saveError {
+                    Section {
+                        Text(saveError)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
             .navigationTitle("Update Handicap")
             .navigationBarTitleDisplayMode(.inline)
@@ -726,14 +735,24 @@ struct EditHandicapSheet: View {
                     Button("Save") {
                         guard let value = Double(handicapText.trimmingCharacters(in: .whitespaces)) else { return }
                         isSaving = true
+                        saveError = nil
                         Task {
                             await authVM.updateProfile(["handicapIndex": value])
-                            isSaving = false
-                            dismiss()
+                            if let error = authVM.error {
+                                saveError = error
+                                authVM.error = nil
+                                isSaving = false
+                            } else {
+                                isSaving = false
+                                dismiss()
+                            }
                         }
                     }
                     .disabled(Double(handicapText.trimmingCharacters(in: .whitespaces)) == nil || isSaving)
                 }
+            }
+            .onAppear {
+                handicapText = authVM.currentProfile?.handicapIndex.map { String(format: "%.1f", $0) } ?? ""
             }
         }
         .presentationDetents([.medium])

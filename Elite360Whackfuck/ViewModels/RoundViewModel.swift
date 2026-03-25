@@ -116,6 +116,7 @@ final class RoundViewModel: ObservableObject {
 
         // Recalculate totals
         card.totalGross = card.holeScores.filter(\.isComplete).reduce(0) { $0 + $1.strokes }
+        card.totalNet = card.totalGross - card.courseHandicap
         card.totalPutts = card.holeScores.filter(\.isComplete).reduce(0) { $0 + $1.putts }
         card.fairwaysHit = card.holeScores.filter(\.isComplete).compactMap(\.fairwayHit).filter { $0 }.count
         card.greensInRegulation = card.holeScores.filter(\.isComplete).filter(\.greenInRegulation).count
