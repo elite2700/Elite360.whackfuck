@@ -1,5 +1,7 @@
 import SwiftUI
 import ContactsUI
+import Contacts
+import FirebaseFirestore
 
 struct ProfileView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -288,7 +290,7 @@ struct FriendsListView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var showAddFriend = false
-    @State private var showContactPicker = false
+    @State private var showContactSearch = false
     @State private var editingFriend: Friend?
 
     private var filteredFriends: [Friend] {
@@ -302,9 +304,9 @@ struct FriendsListView: View {
                 // Import from contacts
                 Section {
                     Button {
-                        showContactPicker = true
+                        showContactSearch = true
                     } label: {
-                        Label("Import from Contacts", systemImage: "person.crop.circle.badge.plus")
+                        Label("Search & Import Contacts", systemImage: "person.crop.circle.badge.plus")
                             .foregroundStyle(.green)
                     }
                 }
@@ -349,8 +351,8 @@ struct FriendsListView: View {
                 AddFriendSheet()
                     .environmentObject(authVM)
             }
-            .sheet(isPresented: $showContactPicker) {
-                ContactPickerView { contacts in
+            .sheet(isPresented: $showContactSearch) {
+                ContactSearchView { contacts in
                     for contact in contacts {
                         let name = [contact.givenName, contact.familyName]
                             .filter { !$0.isEmpty }
@@ -386,36 +388,138 @@ struct FriendsListView: View {
     }
 }
 
-// MARK: - Contact Picker (UIKit bridge)
+// MARK: - Contact Search View
 
-struct ContactPickerView: UIViewControllerRepresentable {
-    let onSelect: ([CNContact]) -> Void
+struct ContactSearchView: View {
+    let onImport: ([CNContact]) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    @State private var contacts: [CNContact] = []
+    @State private var selected: Set<String> = [] // keyed by CNContact.identifier
+    @State private var permissionDenied = false
+    @State private var hasLoaded = false
 
-    func makeUIViewController(context: Context) -> CNContactPickerViewController {
-        let picker = CNContactPickerViewController()
-        picker.delegate = context.coordinator
-        return picker
+    private let store = CNContactStore()
+    private let keysToFetch: [CNKeyDescriptor] = [
+        CNContactGivenNameKey as CNKeyDescriptor,
+        CNContactFamilyNameKey as CNKeyDescriptor,
+        CNContactEmailAddressesKey as CNKeyDescriptor,
+        CNContactPhoneNumbersKey as CNKeyDescriptor,
+        CNContactIdentifierKey as CNKeyDescriptor
+    ]
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if permissionDenied {
+                    ContentUnavailableView(
+                        "Contacts Access Required",
+                        systemImage: "person.crop.circle.badge.exclamationmark",
+                        description: Text("Go to Settings > Privacy > Contacts to allow access.")
+                    )
+                } else if contacts.isEmpty && hasLoaded {
+                    if searchText.isEmpty {
+                        ContentUnavailableView(
+                            "No Contacts",
+                            systemImage: "person.slash",
+                            description: Text("No contacts found on this device.")
+                        )
+                    } else {
+                        ContentUnavailableView.search(text: searchText)
+                    }
+                } else {
+                    List(contacts, id: \.identifier) { contact in
+                        let name = [contact.givenName, contact.familyName]
+                            .filter { !$0.isEmpty }
+                            .joined(separator: " ")
+                        let isSelected = selected.contains(contact.identifier)
+
+                        Button {
+                            if isSelected {
+                                selected.remove(contact.identifier)
+                            } else {
+                                selected.insert(contact.identifier)
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(isSelected ? .green : .secondary)
+                                    .font(.title3)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(name.isEmpty ? "(No Name)" : name)
+                                        .font(.subheadline.bold())
+                                        .foregroundStyle(.primary)
+                                    HStack(spacing: 8) {
+                                        if let email = contact.emailAddresses.first?.value as String?, !email.isEmpty {
+                                            Label(email, systemImage: "envelope")
+                                        }
+                                        if let phone = contact.phoneNumbers.first?.value.stringValue, !phone.isEmpty {
+                                            Label(phone, systemImage: "phone")
+                                        }
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                }
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+            }
+            .searchable(text: $searchText, prompt: "Search contacts by name")
+            .onChange(of: searchText) { fetchContacts() }
+            .navigationTitle("Search Contacts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Import (\(selected.count))") {
+                        let chosen = contacts.filter { selected.contains($0.identifier) }
+                        onImport(chosen)
+                        dismiss()
+                    }
+                    .disabled(selected.isEmpty)
+                }
+            }
+            .task { requestAccessAndLoad() }
+        }
     }
 
-    func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onSelect: onSelect)
+    private func requestAccessAndLoad() {
+        store.requestAccess(for: .contacts) { granted, _ in
+            DispatchQueue.main.async {
+                if granted {
+                    fetchContacts()
+                } else {
+                    permissionDenied = true
+                }
+                hasLoaded = true
+            }
+        }
     }
 
-    class Coordinator: NSObject, CNContactPickerDelegate {
-        let onSelect: ([CNContact]) -> Void
+    private func fetchContacts() {
+        let request = CNContactFetchRequest(keysToFetch: keysToFetch)
+        request.sortOrder = .givenName
 
-        init(onSelect: @escaping ([CNContact]) -> Void) {
-            self.onSelect = onSelect
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if !query.isEmpty {
+            request.predicate = CNContact.predicateForContacts(matchingName: query)
         }
 
-        func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
-            onSelect(contacts)
+        var results: [CNContact] = []
+        do {
+            try store.enumerateContacts(with: request) { contact, _ in
+                results.append(contact)
+            }
+        } catch {
+            // Silently handle — list will be empty
         }
-
-        func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
-            onSelect([])
+        DispatchQueue.main.async {
+            contacts = results
         }
     }
 }
@@ -535,6 +639,7 @@ struct EditFriendSheet: View {
     @State private var phone = ""
     @State private var handicapText = ""
     @State private var isSaving = false
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
@@ -559,6 +664,13 @@ struct EditFriendSheet: View {
                 } header: {
                     Text("Optional")
                 }
+
+                if let saveError {
+                    Section {
+                        Text(saveError)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
             .navigationTitle("Edit Friend")
             .navigationBarTitleDisplayMode(.inline)
@@ -569,20 +681,29 @@ struct EditFriendSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         isSaving = true
+                        saveError = nil
                         var fields: [String: Any] = [
-                            "name": name.trimmingCharacters(in: .whitespacesAndNewlines),
-                            "email": email.isEmpty ? NSNull() : email.trimmingCharacters(in: .whitespacesAndNewlines),
-                            "phone": phone.isEmpty ? NSNull() : phone.trimmingCharacters(in: .whitespacesAndNewlines)
+                            "name": name.trimmingCharacters(in: .whitespacesAndNewlines)
                         ]
+                        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+                        fields["email"] = trimmedEmail.isEmpty ? FieldValue.delete() : trimmedEmail
+                        let trimmedPhone = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+                        fields["phone"] = trimmedPhone.isEmpty ? FieldValue.delete() : trimmedPhone
                         if let hcpValue = Double(handicapText.trimmingCharacters(in: .whitespaces)) {
                             fields["handicap"] = hcpValue
                         } else {
-                            fields["handicap"] = NSNull()
+                            fields["handicap"] = FieldValue.delete()
                         }
                         Task {
                             await authVM.updateFriend(friend, fields: fields)
-                            isSaving = false
-                            dismiss()
+                            if let error = authVM.error {
+                                saveError = error
+                                authVM.error = nil
+                                isSaving = false
+                            } else {
+                                isSaving = false
+                                dismiss()
+                            }
                         }
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
