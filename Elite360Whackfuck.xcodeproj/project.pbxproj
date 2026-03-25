@@ -588,6 +588,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Elite360;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Elite360 accesses your contacts so you can quickly add golf buddies to your friends list.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Elite360 uses your location to calculate distances to the green and provide GPS rangefinder features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -619,6 +620,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Elite360;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSContactsUsageDescription = "Elite360 accesses your contacts so you can quickly add golf buddies to your friends list.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Elite360 uses your location to calculate distances to the green and provide GPS rangefinder features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

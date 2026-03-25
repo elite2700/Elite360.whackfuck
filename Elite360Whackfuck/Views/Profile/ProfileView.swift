@@ -1,4 +1,5 @@
 import SwiftUI
+import ContactsUI
 
 struct ProfileView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -289,6 +290,7 @@ struct FriendsListView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var showAddFriend = false
+    @State private var showContactPicker = false
     @State private var editingFriend: Friend?
 
     private var filteredFriends: [Friend] {
@@ -299,9 +301,19 @@ struct FriendsListView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Import from contacts
+                Section {
+                    Button {
+                        showContactPicker = true
+                    } label: {
+                        Label("Import from Contacts", systemImage: "person.crop.circle.badge.plus")
+                            .foregroundStyle(.green)
+                    }
+                }
+
                 Section("Friends (\(authVM.friends.count))") {
                     if authVM.friends.isEmpty {
-                        Text("No friends yet. Tap + to add one!")
+                        Text("No friends yet. Tap + or import from contacts!")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredFriends) { friend in
@@ -339,11 +351,73 @@ struct FriendsListView: View {
                 AddFriendSheet()
                     .environmentObject(authVM)
             }
+            .sheet(isPresented: $showContactPicker) {
+                ContactPickerView { contacts in
+                    for contact in contacts {
+                        let name = [contact.givenName, contact.familyName]
+                            .filter { !$0.isEmpty }
+                            .joined(separator: " ")
+                        guard !name.isEmpty else { continue }
+
+                        let email = contact.emailAddresses.first?.value as String?
+                        let phone = contact.phoneNumbers.first?.value.stringValue
+
+                        // Skip if already in friends list (match by name)
+                        let alreadyExists = authVM.friends.contains {
+                            $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
+                        }
+                        guard !alreadyExists else { continue }
+
+                        let friend = Friend(
+                            name: name,
+                            email: email,
+                            phone: phone,
+                            handicap: nil,
+                            createdAt: Date()
+                        )
+                        Task { await authVM.addFriend(friend) }
+                    }
+                }
+            }
             .sheet(item: $editingFriend) { friend in
                 EditFriendSheet(friend: friend)
                     .environmentObject(authVM)
             }
             .task { await authVM.loadFriends() }
+        }
+    }
+}
+
+// MARK: - Contact Picker (UIKit bridge)
+
+struct ContactPickerView: UIViewControllerRepresentable {
+    let onSelect: ([CNContact]) -> Void
+
+    func makeUIViewController(context: Context) -> CNContactPickerViewController {
+        let picker = CNContactPickerViewController()
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: CNContactPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onSelect: onSelect)
+    }
+
+    class Coordinator: NSObject, CNContactPickerDelegate {
+        let onSelect: ([CNContact]) -> Void
+
+        init(onSelect: @escaping ([CNContact]) -> Void) {
+            self.onSelect = onSelect
+        }
+
+        func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
+            onSelect(contacts)
+        }
+
+        func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+            onSelect([])
         }
     }
 }
