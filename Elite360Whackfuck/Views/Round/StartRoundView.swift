@@ -442,8 +442,6 @@ struct AddPlayerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var guestName = ""
-    @State private var friends: [UserProfile] = []
-    @State private var isLoadingFriends = false
 
     var body: some View {
         NavigationStack {
@@ -464,27 +462,23 @@ struct AddPlayerSheet: View {
 
                 // Friends list
                 Section("Friends") {
-                    if isLoadingFriends {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    } else if friends.isEmpty {
-                        Text("No friends added yet")
+                    if authVM.friends.isEmpty {
+                        Text("No friends yet. Add friends in your profile.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(friends) { friend in
+                        ForEach(authVM.friends) { friend in
                             let alreadyAdded = addedPlayers.contains { $0.id == friend.id }
                             Button {
                                 guard !alreadyAdded else { return }
-                                addedPlayers.append(friend)
-                                dismiss()
+                                addedPlayers.append(friendToPlayer(friend))
                             } label: {
                                 HStack {
                                     Image(systemName: "person.circle.fill")
                                         .foregroundStyle(.green)
                                     VStack(alignment: .leading) {
-                                        Text(friend.displayName)
+                                        Text(friend.name)
                                             .foregroundStyle(.primary)
-                                        if let hcp = friend.handicapIndex {
+                                        if let hcp = friend.handicap {
                                             Text("Handicap: \(String(format: "%.1f", hcp))")
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
@@ -509,7 +503,6 @@ struct AddPlayerSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { await loadFriends() }
         }
         .presentationDetents([.medium, .large])
     }
@@ -517,7 +510,29 @@ struct AddPlayerSheet: View {
     private func addGuest() {
         let name = guestName.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return }
-        let guest = UserProfile(
+        addedPlayers.append(guestPlayer(name: name))
+        guestName = ""
+    }
+
+    private func friendToPlayer(_ friend: Friend) -> UserProfile {
+        UserProfile(
+            id: friend.id ?? UUID().uuidString,
+            email: friend.email ?? "",
+            displayName: friend.name,
+            photoURL: nil,
+            homeCourse: nil,
+            handicapIndex: friend.handicap,
+            username: friend.name.lowercased().replacingOccurrences(of: " ", with: ""),
+            friendIDs: [],
+            groupIDs: [],
+            isPremium: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+
+    private func guestPlayer(name: String) -> UserProfile {
+        UserProfile(
             id: UUID().uuidString,
             email: "",
             displayName: name,
@@ -531,22 +546,6 @@ struct AddPlayerSheet: View {
             createdAt: Date(),
             updatedAt: Date()
         )
-        addedPlayers.append(guest)
-        guestName = ""
-    }
-
-    private func loadFriends() async {
-        guard let friendIDs = authVM.currentProfile?.friendIDs, !friendIDs.isEmpty else { return }
-        isLoadingFriends = true
-        let db = FirestoreService.shared
-        var loaded: [UserProfile] = []
-        for fid in friendIDs {
-            if let profile: UserProfile = try? await db.getDocument(from: UserProfile.collectionName, documentID: fid) {
-                loaded.append(profile)
-            }
-        }
-        friends = loaded
-        isLoadingFriends = false
     }
 }
 

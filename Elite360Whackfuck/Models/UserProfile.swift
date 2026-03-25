@@ -18,6 +18,18 @@ struct UserProfile: Codable, Identifiable {
     static let collectionName = "users"
 }
 
+/// A contact in the user's personal friends list (stored as subcollection users/{uid}/friends)
+struct Friend: Codable, Identifiable {
+    @DocumentID var id: String?
+    var name: String
+    var email: String?
+    var phone: String?
+    var handicap: Double?
+    var createdAt: Date
+
+    static let collectionName = "friends"
+}
+
 struct FriendRequest: Codable, Identifiable {
     @DocumentID var id: String?
     var fromUserID: String

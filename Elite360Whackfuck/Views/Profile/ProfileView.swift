@@ -170,7 +170,7 @@ struct ProfileView: View {
                     .font(.caption)
             }
 
-            let count = authVM.currentProfile?.friendIDs.count ?? 0
+            let count = authVM.friends.count
             Text("\(count) friends")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -288,46 +288,238 @@ struct FriendsListView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @State private var showAddFriend = false
+    @State private var editingFriend: Friend?
+
+    private var filteredFriends: [Friend] {
+        if searchText.isEmpty { return authVM.friends }
+        return authVM.friends.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
 
     var body: some View {
         NavigationStack {
-            VStack {
-                // Search
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                    TextField("Search by username...", text: $searchText)
-                }
-                .padding()
-                .background(.regularMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding()
-
-                List {
-                    Section("Friends (\(authVM.currentProfile?.friendIDs.count ?? 0))") {
-                        if authVM.currentProfile?.friendIDs.isEmpty ?? true {
-                            Text("No friends yet. Search to add some!")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(authVM.currentProfile?.friendIDs ?? [], id: \.self) { friendID in
-                                HStack {
-                                    Image(systemName: "person.circle.fill")
-                                        .foregroundStyle(.green)
-                                    Text(friendID.prefix(8))
-                                    Spacer()
-                                }
+            List {
+                Section("Friends (\(authVM.friends.count))") {
+                    if authVM.friends.isEmpty {
+                        Text("No friends yet. Tap + to add one!")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredFriends) { friend in
+                            Button {
+                                editingFriend = friend
+                            } label: {
+                                FriendRow(friend: friend)
+                            }
+                        }
+                        .onDelete { offsets in
+                            let toDelete = offsets.map { filteredFriends[$0] }
+                            for friend in toDelete {
+                                Task { await authVM.deleteFriend(friend) }
                             }
                         }
                     }
                 }
             }
+            .searchable(text: $searchText, prompt: "Search friends")
             .navigationTitle("Friends")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Done") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAddFriend = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showAddFriend) {
+                AddFriendSheet()
+                    .environmentObject(authVM)
+            }
+            .sheet(item: $editingFriend) { friend in
+                EditFriendSheet(friend: friend)
+                    .environmentObject(authVM)
+            }
+            .task { await authVM.loadFriends() }
+        }
+    }
+}
+
+struct FriendRow: View {
+    let friend: Friend
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(friend.name)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                HStack(spacing: 8) {
+                    if let email = friend.email, !email.isEmpty {
+                        Label(email, systemImage: "envelope")
+                    }
+                    if let phone = friend.phone, !phone.isEmpty {
+                        Label(phone, systemImage: "phone")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            }
+            Spacer()
+            if let hcp = friend.handicap {
+                Text(String(format: "%.1f", hcp))
+                    .font(.caption.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.green.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+        }
+    }
+}
+
+// MARK: - Add Friend Sheet
+
+struct AddFriendSheet: View {
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var email = ""
+    @State private var phone = ""
+    @State private var handicapText = ""
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name *", text: $name)
+                        .textContentType(.name)
+                } header: {
+                    Text("Required")
+                }
+
+                Section {
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                    TextField("Cell Phone", text: $phone)
+                        .textContentType(.telephoneNumber)
+                        .keyboardType(.phonePad)
+                    TextField("Handicap", text: $handicapText)
+                        .keyboardType(.decimalPad)
+                } header: {
+                    Text("Optional")
+                }
+            }
+            .navigationTitle("Add Friend")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        isSaving = true
+                        let friend = Friend(
+                            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            email: email.isEmpty ? nil : email.trimmingCharacters(in: .whitespacesAndNewlines),
+                            phone: phone.isEmpty ? nil : phone.trimmingCharacters(in: .whitespacesAndNewlines),
+                            handicap: Double(handicapText.trimmingCharacters(in: .whitespaces)),
+                            createdAt: Date()
+                        )
+                        Task {
+                            await authVM.addFriend(friend)
+                            isSaving = false
+                            dismiss()
+                        }
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
                 }
             }
         }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Edit Friend Sheet
+
+struct EditFriendSheet: View {
+    let friend: Friend
+    @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var email = ""
+    @State private var phone = ""
+    @State private var handicapText = ""
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name *", text: $name)
+                        .textContentType(.name)
+                } header: {
+                    Text("Required")
+                }
+
+                Section {
+                    TextField("Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                    TextField("Cell Phone", text: $phone)
+                        .textContentType(.telephoneNumber)
+                        .keyboardType(.phonePad)
+                    TextField("Handicap", text: $handicapText)
+                        .keyboardType(.decimalPad)
+                } header: {
+                    Text("Optional")
+                }
+            }
+            .navigationTitle("Edit Friend")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        isSaving = true
+                        let fields: [String: Any] = [
+                            "name": name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            "email": email.isEmpty ? NSNull() : email.trimmingCharacters(in: .whitespacesAndNewlines),
+                            "phone": phone.isEmpty ? NSNull() : phone.trimmingCharacters(in: .whitespacesAndNewlines),
+                            "handicap": Double(handicapText.trimmingCharacters(in: .whitespaces)) as Any
+                        ]
+                        Task {
+                            await authVM.updateFriend(friend, fields: fields)
+                            isSaving = false
+                            dismiss()
+                        }
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
+                }
+            }
+            .onAppear {
+                name = friend.name
+                email = friend.email ?? ""
+                phone = friend.phone ?? ""
+                handicapText = friend.handicap.map { String(format: "%.1f", $0) } ?? ""
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 

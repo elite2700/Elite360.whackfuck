@@ -8,6 +8,7 @@ final class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = true
     @Published var currentProfile: UserProfile?
+    @Published var friends: [Friend] = []
     @Published var error: String?
 
     private var authHandle: AuthStateDidChangeListenerHandle?
@@ -21,8 +22,10 @@ final class AuthViewModel: ObservableObject {
                 self?.isAuthenticated = user != nil
                 if let uid = user?.uid {
                     await self?.loadProfile(uid: uid)
+                    await self?.loadFriends()
                 } else {
                     self?.currentProfile = nil
+                    self?.friends = []
                 }
                 self?.isLoading = false
             }
@@ -145,6 +148,82 @@ final class AuthViewModel: ObservableObject {
                 profile.updatedAt = Date()
                 currentProfile = profile
             }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    // MARK: - Friends (subcollection: users/{uid}/friends)
+
+    func loadFriends() async {
+        guard let uid = auth.currentUserID else { return }
+        do {
+            friends = try await db.getSubcollection(
+                parentCollection: UserProfile.collectionName,
+                parentID: uid,
+                subcollection: Friend.collectionName
+            )
+        } catch {
+            friends = []
+        }
+    }
+
+    func addFriend(_ friend: Friend) async {
+        guard let uid = auth.currentUserID else { return }
+        do {
+            let docID = try await db.createInSubcollection(
+                friend,
+                parentCollection: UserProfile.collectionName,
+                parentID: uid,
+                subcollection: Friend.collectionName
+            )
+            var saved = friend
+            saved.id = docID
+            friends.append(saved)
+            friends.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func updateFriend(_ friend: Friend, fields: [String: Any]) async {
+        guard let uid = auth.currentUserID, let fid = friend.id else { return }
+        do {
+            try await db.updateInSubcollection(
+                parentCollection: UserProfile.collectionName,
+                parentID: uid,
+                subcollection: Friend.collectionName,
+                documentID: fid,
+                fields: fields
+            )
+            if let idx = friends.firstIndex(where: { $0.id == fid }) {
+                var updated = friends[idx]
+                for (key, value) in fields {
+                    switch key {
+                    case "name": updated.name = value as? String ?? updated.name
+                    case "email": updated.email = value as? String
+                    case "phone": updated.phone = value as? String
+                    case "handicap": updated.handicap = value as? Double
+                    default: break
+                    }
+                }
+                friends[idx] = updated
+            }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func deleteFriend(_ friend: Friend) async {
+        guard let uid = auth.currentUserID, let fid = friend.id else { return }
+        do {
+            try await db.deleteFromSubcollection(
+                parentCollection: UserProfile.collectionName,
+                parentID: uid,
+                subcollection: Friend.collectionName,
+                documentID: fid
+            )
+            friends.removeAll { $0.id == fid }
         } catch {
             self.error = error.localizedDescription
         }

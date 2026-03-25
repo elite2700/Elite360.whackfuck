@@ -119,4 +119,59 @@ final class FirestoreService {
     func collectionRef(_ name: String) -> CollectionReference {
         db.collection(name)
     }
+
+    // MARK: - Subcollection CRUD
+
+    func createInSubcollection<T: Codable>(
+        _ object: T,
+        parentCollection: String,
+        parentID: String,
+        subcollection: String
+    ) async throws -> String {
+        let ref = try db.collection(parentCollection)
+            .document(parentID)
+            .collection(subcollection)
+            .addDocument(from: object)
+        return ref.documentID
+    }
+
+    func getSubcollection<T: Codable>(
+        parentCollection: String,
+        parentID: String,
+        subcollection: String
+    ) async throws -> [T] {
+        let snapshot = try await db.collection(parentCollection)
+            .document(parentID)
+            .collection(subcollection)
+            .order(by: "name")
+            .getDocuments()
+        return snapshot.documents.compactMap { try? $0.data(as: T.self) }
+    }
+
+    func updateInSubcollection(
+        parentCollection: String,
+        parentID: String,
+        subcollection: String,
+        documentID: String,
+        fields: [String: Any]
+    ) async throws {
+        try await db.collection(parentCollection)
+            .document(parentID)
+            .collection(subcollection)
+            .document(documentID)
+            .updateData(fields)
+    }
+
+    func deleteFromSubcollection(
+        parentCollection: String,
+        parentID: String,
+        subcollection: String,
+        documentID: String
+    ) async throws {
+        try await db.collection(parentCollection)
+            .document(parentID)
+            .collection(subcollection)
+            .document(documentID)
+            .delete()
+    }
 }
